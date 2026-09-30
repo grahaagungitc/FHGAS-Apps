@@ -1,65 +1,75 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-generator client {
-  provider = "prisma-client-js"
-}
-
-model SystemRole {
-  id          String   @id @default(cuid())
-  name        String   @unique
-  code        String   @unique
-  description String?
-  isSystem    Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  userRoles   UserRole[]
-}
-
 model Department {
-  id          String   @id @default(cuid())
-  name        String   @unique
-  code        String   @unique
-  description String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  users       User[]
+  id        String   @id @default(cuid())
+  name      String   @unique
+  code      String?  @unique
+  users     User[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model User {
-  id            String       @id @default(cuid())
-  name          String?
-  email         String       @unique
-  emailVerified DateTime?
-  image         String?
-  departmentId  String?
-  department    Department?  @relation(fields: [departmentId], references: [id])
+  id              String      @id @default(cuid())
+  name            String
+  email           String      @unique
+  position        String?
+  departmentId    String?
+  department      Department? @relation(fields: [departmentId], references: [id])
   
-  roles         UserRole[]
-  isGuestViewOnly Boolean    @default(false)
+  // Flag Jabatan/Role Approval
+  isDeptHead      Boolean     @default(false)
+  isFinanceLeader Boolean     @default(false)
+  isHotelManager  Boolean     @default(false)
+  isFOLeader      Boolean     @default(false)
+  isIT            Boolean     @default(false)
 
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
+  // Relasi sebaliknya (Opposite Relations)
+  accounts           Account[]
+  sessions           Session[]
+  userRoles          UserRole[]
+  saaRequests        SaaRequest[]
+  saaApprovalHistory SaaApprovalHistory[]
+  assignedSaaApprovalTasks SaaApprovalTask[]
+  notifications      Notification[]
+  resolvedAccessRequests AccessRequest[] @relation("AccessRequestResolver")
 
-  accounts      Account[]
-  sessions      Session[]
-
-  requestedSaas SaaRequest[] @relation("SaaRequester")
-  approvedSaas  SaaApprovalHistory[]
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
 }
 
-model UserRole {
-  id           String     @id @default(cuid())
-  userId       String
-  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  roleId       String
-  role         SystemRole @relation(fields: [roleId], references: [id], onDelete: Cascade)
-  createdAt    DateTime   @default(now())
+model SaaRequest {
+  id             String               @id @default(cuid())
+  userId         String?
+  user           User?                @relation(fields: [userId], references: [id])
 
-  @@unique([userId, roleId])
+  // Relasi ke SaaFormConfig (Menyelesaikan Error P1012)
+  formConfigId   String?
+  formConfig     SaaFormConfig?       @relation(fields: [formConfigId], references: [id], onDelete: SetNull)
+
+  name           String
+  email          String
+  position       String
+  department     String
+  mobilePhone    String?
+  formType       String               // PMS, EMAIL, USER_DOMAIN, USER_LOCAL, ACCESS_CARD
+  actionType     String               // Create, Modify, Suspend, Delete
+  accessDetails  Json?
+  reason         String
+  status         String               @default("PENDING")
+  currentStep    Int                  @default(1)
+  history        SaaApprovalHistory[]
+  approvalTasks  SaaApprovalTask[]
+  notifications  Notification[]
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
 }
 
 model Account {
@@ -68,17 +78,80 @@ model Account {
   type              String
   provider          String
   providerAccountId String
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
+  refresh_token     String?
+  access_token      String?
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String? @db.Text
+  id_token          String?
   session_state     String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  User              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
+}
+
+model SaaApprovalHistory {
+  id           String     @id @default(cuid())
+  saaRequestId String
+  saaRequest   SaaRequest @relation(fields: [saaRequestId], references: [id], onDelete: Cascade)
+  approverId   String
+  approver     User       @relation(fields: [approverId], references: [id])
+  status       String
+  notes        String?
+  createdAt    DateTime   @default(now())
+}
+
+model SaaApprovalTask {
+  id                 String          @id @default(cuid())
+  requestId          String
+  request            SaaRequest      @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  stepId             String
+  step               SaaApprovalStep @relation(fields: [stepId], references: [id])
+  stepOrder          Int
+  assignedToUserId   String?
+  assignedTo         User?           @relation(fields: [assignedToUserId], references: [id], onDelete: SetNull)
+  status             String          @default("WAITING")
+  notes              String?
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+
+  @@unique([requestId, stepId])
+  @@index([assignedToUserId, status])
+}
+
+model AccessRequest {
+  id           String        @id @default(cuid())
+  email        String        @unique
+  name         String
+  status       String        @default("PENDING")
+  resolvedById String?
+  resolvedBy   User?         @relation("AccessRequestResolver", fields: [resolvedById], references: [id], onDelete: SetNull)
+  resolvedAt   DateTime?
+  notifications Notification[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@index([status, createdAt])
+}
+
+model Notification {
+  id              String         @id @default(cuid())
+  userId          String
+  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessRequestId String?
+  accessRequest   AccessRequest? @relation(fields: [accessRequestId], references: [id], onDelete: Cascade)
+  saaRequestId    String?
+  saaRequest      SaaRequest?    @relation(fields: [saaRequestId], references: [id], onDelete: Cascade)
+  referenceKey    String?
+  title           String
+  message         String
+  href            String
+  readAt          DateTime?
+  createdAt       DateTime       @default(now())
+
+  @@unique([userId, accessRequestId])
+  @@unique([userId, saaRequestId, referenceKey])
+  @@index([userId, readAt, createdAt])
 }
 
 model Session {
@@ -86,7 +159,29 @@ model Session {
   sessionToken String   @unique
   userId       String
   expires      DateTime
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  User         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model SystemRole {
+  id          String     @id @default(cuid())
+  name        String     @unique
+  code        String     @unique
+  description String?
+  isSystem    Boolean    @default(false)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  UserRole    UserRole[]
+}
+
+model UserRole {
+  id         String     @id @default(cuid())
+  userId     String
+  roleId     String
+  createdAt  DateTime   @default(now())
+  SystemRole SystemRole @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  User       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, roleId])
 }
 
 model VerificationToken {
@@ -121,34 +216,74 @@ enum SaaStatus {
   CANCELLED
 }
 
-model SaaRequest {
-  id          String      @id @default(cuid())
-  ticketNo    String      @unique
-  formType    SaaFormType
-  actionType  SaaActionType
-  status      SaaStatus   @default(DRAFT)
-  reason      String      @db.Text
-  
-  requesterId String
-  requester   User        @relation("SaaRequester", fields: [requesterId], references: [id])
+// 1. Tipe SAA (e.g. PMS, EMAIL, USER_DOMAIN, ACCESS_CARD)
+model SaaFormConfig {
+  id            String                @id @default(cuid())
+  code          String                @unique // Kode unik form
+  name          String                // Nama form
+  description   String?
+  isActive      Boolean               @default(true)
+  createdAt     DateTime              @default(now())
+  updatedAt     DateTime              @updatedAt
 
-  approvalHistories SaaApprovalHistory[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  // Pivot Table Relations
+  fields        SaaFormField[]
+  approvalSteps SaaFormApprovalStep[]
+  saaRequests   SaaRequest[]
 }
 
-model SaaApprovalHistory {
-  id           String     @id @default(cuid())
-  saaRequestId String
-  saaRequest   SaaRequest @relation(fields: [saaRequestId], references: [id], onDelete: Cascade)
-  
-  approverId   String
-  approver     User       @relation(fields: [approverId], references: [id])
-  
-  step         SaaStatus
-  approved     Boolean
-  comment      String?    @db.Text
+// 2. Master Field Repository (Reusable Across Form Types)
+model SaaField {
+  id         String         @id @default(cuid())
+  fieldKey   String         @unique // Key unik (e.g., "idName", "idPosition")
+  label      String         // Label tampilan
+  fieldType  String         // "TEXT" | "CHECKBOX" | "SELECT" | "TEXTAREA" | "ACTION_BTN"
+  section    String         @default("DETAIL") // "GENERAL" | "ACTION" | "DETAIL"
+  options    Json?          // Opsi jika dropdown/checkbox
+  isRequired Boolean        @default(false)
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
 
-  createdAt    DateTime   @default(now())
+  // Relasi ke Pivot Table
+  assignedForms SaaFormField[]
+}
+
+// 3. Pivot Table: Form Config <-> Master Field
+model SaaFormField {
+  id           String        @id @default(cuid())
+  formConfigId String
+  fieldId      String
+  order        Int           @default(0) // Urutan tampilan khusus pada Form Tipe ini
+  section      String        @default("DETAIL")
+
+  formConfig   SaaFormConfig @relation(fields: [formConfigId], references: [id], onDelete: Cascade)
+  field        SaaField      @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+
+  @@unique([formConfigId, fieldId])
+}
+
+// 4. Master Approval Step Repository (Reusable)
+model SaaApprovalStep {
+  id         String                @id @default(cuid())
+  role       String                // "HOD" | "FO_LEADER" | "FINANCE_LEADER" | "HOTEL_MANAGER" | "IT_VERIFICATION"
+  label      String                // Label nama step
+  createdAt  DateTime              @default(now())
+  updatedAt  DateTime              @updatedAt
+
+  // Relasi ke Pivot Table
+  assignedForms SaaFormApprovalStep[]
+  tasks         SaaApprovalTask[]
+}
+
+// 5. Pivot Table: Form Config <-> Master Approval Step
+model SaaFormApprovalStep {
+  id           String          @id @default(cuid())
+  formConfigId String
+  stepId       String
+  step         Int             // Urutan step (1, 2, 3...) khusus pada Form Tipe ini
+
+  formConfig   SaaFormConfig   @relation(fields: [formConfigId], references: [id], onDelete: Cascade)
+  approvalStep SaaApprovalStep @relation(fields: [stepId], references: [id], onDelete: Cascade)
+
+  @@unique([formConfigId, stepId])
 }

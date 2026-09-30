@@ -1,54 +1,61 @@
 import NextAuth from "next-auth";
-import Google from "next-auth/providers/google";
-import { PrismaAdapter } from "@auth/prisma-adapter";
-import { prisma } from "@/lib/prisma";
+import GoogleProvider from "next-auth/providers/google";
+import { db } from "@/lib/db";
+import { requestUnregisteredAccess } from "@/lib/access-requests";
 
-export const { handlers, auth, signIn, signOut } = NextAuth({
-  adapter: PrismaAdapter(prisma),
+export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
-    Google({
-      clientId: process.env.AUTH_GOOGLE_ID,
-      clientSecret: process.env.AUTH_GOOGLE_SECRET,
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID ?? "",
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? "",
     }),
   ],
+  session: { strategy: "jwt" },
   callbacks: {
-    async signIn({ user, profile }) {
-      if (!user.email) return false;
-
-      const existingUser = await prisma.user.findUnique({
-        where: { email: user.email },
-      });
-
-      if (!existingUser) {
-        await prisma.user.create({
-          data: {
-            email: user.email,
-            name: profile?.name || user.name || user.email.split("@")[0],
-            image: user.image,
-            isGuestViewOnly: true,
-          },
-        });
+    async signIn({ user }) {
+      if (!user?.email) {
+        return false;
       }
-      return true;
+
+      try {
+        const existingUser = await db.user.findUnique({
+          where: { email: user.email.trim().toLowerCase() },
+        });
+        if (existingUser) return true;
+
+        await requestUnregisteredAccess({
+          email: user.email,
+          name: user.name || user.email,
+        });
+        return "/login?error=AccessPending";
+      } catch (error) {
+        console.error("Database error during sign-in:", error);
+        return false;
+      }
     },
-    async session({ session, token }) {
-      if (session.user?.email) {
-        const dbUser = await prisma.user.findUnique({
-          where: { email: session.user.email },
-          include: {
-            roles: {
-              include: { role: true },
-            },
-            department: true,
-          },
+    async jwt({ token, user }) {
+      if (user?.email) {
+        const dbUser = await db.user.findUnique({
+          where: { email: user.email },
+          include: { userRoles: { include: { SystemRole: true } } },
         });
 
         if (dbUser) {
-          session.user.id = dbUser.id;
-          session.user.isGuestViewOnly = dbUser.isGuestViewOnly;
-          session.user.roles = dbUser.roles.map((ur) => ur.role.code);
-          session.user.department = dbUser.department;
+          const roleCodes = dbUser.userRoles.map((role) => role.SystemRole.code);
+          token.id = dbUser.id;
+          token.systemRole = roleCodes.includes("ADMIN") ? "ADMIN" : "STAFF";
+          token.isIT = dbUser.isIT;
         }
+      }
+      return token;
+    },
+    async session({ session, token }) {
+      if (session.user) {
+        Object.assign(session.user, {
+          id: token.id ?? token.sub,
+          systemRole: token.systemRole ?? "STAFF",
+          isIT: token.isIT ?? false,
+        });
       }
       return session;
     },
