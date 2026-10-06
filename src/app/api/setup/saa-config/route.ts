@@ -80,17 +80,36 @@ function hasValidApprovalOrder(steps: any[]) {
   );
 }
 
+function normalizeSectionName(section: string) {
+  const value = section.trim();
+  if (!value) return "Access Details";
+  if (value.toLowerCase() === "detail") return "Access Details";
+  if (value.toLowerCase() === "general") return "General Information";
+  if (value.toLowerCase() === "action") return "Action Requested";
+  return value;
+}
+
 function resolveSections(sections: unknown, fields: any[]) {
   const requestedSections = Array.isArray(sections)
     ? sections
     : [...new Set(fields.map((field) => field.section || "Access Details"))];
-  if (!requestedSections.every((section) => typeof section === "string" && section.trim())) {
+
+  if (!requestedSections.every((section) => typeof section === "string")) {
     return null;
   }
 
-  const normalizedSections = requestedSections.map((section: string) => section.trim());
+  const normalizedSections = Array.from(
+    new Set(
+      requestedSections.map((section: string) => normalizeSectionName(section)).filter(Boolean)
+    )
+  );
+
+  if (!normalizedSections.some((section) => section.toLowerCase() === "access details")) {
+    normalizedSections.push("Access Details");
+  }
+
   if (new Set(normalizedSections).size !== normalizedSections.length) return null;
-  if (fields.some((field) => !normalizedSections.includes((field.section || "Access Details").trim()))) {
+  if (fields.some((field) => !normalizedSections.includes(normalizeSectionName(field.section || "Access Details")))) {
     return null;
   }
   return normalizedSections;

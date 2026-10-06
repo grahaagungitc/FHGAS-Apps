@@ -47,6 +47,7 @@ model User {
 
 model SaaRequest {
   id             String               @id @default(cuid())
+  requestNumber  Int                  @unique @default(autoincrement())
   userId         String?
   user           User?                @relation(fields: [userId], references: [id])
 
@@ -65,6 +66,10 @@ model SaaRequest {
   reason         String
   status         String               @default("PENDING")
   currentStep    Int                  @default(1)
+  requesterSignature String?
+  requesterSignedAt DateTime?
+  requesterSignedByName String?
+  requesterSignedByRole String?
   history        SaaApprovalHistory[]
   approvalTasks  SaaApprovalTask[]
   notifications  Notification[]
@@ -91,14 +96,18 @@ model Account {
 }
 
 model SaaApprovalHistory {
-  id           String     @id @default(cuid())
-  saaRequestId String
-  saaRequest   SaaRequest @relation(fields: [saaRequestId], references: [id], onDelete: Cascade)
-  approverId   String
-  approver     User       @relation(fields: [approverId], references: [id])
-  status       String
-  notes        String?
-  createdAt    DateTime   @default(now())
+  id                 String     @id @default(cuid())
+  saaRequestId       String
+  saaRequest         SaaRequest @relation(fields: [saaRequestId], references: [id], onDelete: Cascade)
+  approverId         String
+  approver           User       @relation(fields: [approverId], references: [id])
+  status             String
+  notes              String?
+  digitalSignature   String?
+  signedAt           DateTime?
+  signedByName       String?
+  signedByRole       String?
+  createdAt          DateTime   @default(now())
 }
 
 model SaaApprovalTask {

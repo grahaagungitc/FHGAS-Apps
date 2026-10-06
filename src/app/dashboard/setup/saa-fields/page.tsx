@@ -561,6 +561,7 @@ export default function SaaMasterFieldsPage({
                     className="w-full border rounded-lg p-2 text-sm bg-white"
                   >
                     <option value="TEXT">Input Text</option>
+                    <option value="DATE">Tanggal</option>
                     <option value="CHECKBOX">Checkbox Option</option>
                     <option value="SELECT">Dropdown Select</option>
                     <option value="TEXTAREA">Textarea</option>

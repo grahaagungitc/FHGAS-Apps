@@ -21,22 +21,36 @@ interface SaaRequestSectionsProps {
   fields: FieldOption[];
   values: Record<string, unknown>;
   onFieldChange: (key: string, value: unknown) => void;
+  readOnly?: boolean;
 }
 
 export default function SaaRequestSections(props: SaaRequestSectionsProps) {
+  const normalizeSectionTitle = (title: string | null | undefined) => {
+    const value = title?.trim() || "Access Details";
+    if (value.toLowerCase() === "detail") return "Access Details";
+    if (value.toLowerCase() === "general") return "General Information";
+    if (value.toLowerCase() === "action") return "Action Requested";
+    return value;
+  };
+
   const groupedFields = new Map<string, FieldOption[]>();
   [...props.fields]
     .sort((left, right) => (left.order ?? 0) - (right.order ?? 0))
     .forEach((field) => {
-      const section = field.section?.trim() || "Access Details";
+      const section = normalizeSectionTitle(field.section);
       groupedFields.set(section, [...(groupedFields.get(section) || []), field]);
     });
 
-  const sectionTitles = [
-    ...props.sections,
-    ...[...groupedFields.keys()].filter((title) => !props.sections.includes(title)),
-  ];
-  const sections = sectionTitles.map((title) => ({ title, fields: groupedFields.get(title) || [] }));
+  const sectionTitles = Array.from(
+    new Set([
+      ...props.sections.map(normalizeSectionTitle),
+      ...[...groupedFields.keys()].map(normalizeSectionTitle),
+    ]),
+  );
+  const normalizedTitles = sectionTitles.some((title) => title.toLowerCase() === "access details")
+    ? sectionTitles
+    : [...sectionTitles, "Access Details"];
+  const sections = normalizedTitles.map((title) => ({ title, fields: groupedFields.get(title) || [] }));
 
   return (
     <div className="space-y-5">
@@ -68,6 +82,7 @@ export default function SaaRequestSections(props: SaaRequestSectionsProps) {
                     value={props.values[field.fieldKey]}
                     departments={props.departments}
                     onChange={props.onFieldChange}
+                    readOnly={props.readOnly}
                   />
                 </div>
               ))}

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
+import { createDigitalSignature } from "@/lib/saa";
 
 export async function POST(
   request: Request,
@@ -21,6 +22,7 @@ export async function POST(
   }
 
   try {
+    const approver = await db.user.findUnique({ where: { id: user.id } });
     const result = await db.$transaction(async (tx) => {
       const saaRequest = await tx.saaRequest.findUnique({
         where: { id: params.id },
@@ -42,6 +44,17 @@ export async function POST(
         return { error: "Anda tidak ditugaskan untuk approval ini.", errorStatus: 403 };
       }
 
+      const signature = createDigitalSignature({
+        requestId: saaRequest.id,
+        requestNumber: saaRequest.requestNumber,
+        signerId: user.id,
+        signerName: approver?.name || "Approver",
+        signerRole: task.step.role,
+        decision,
+        stepOrder: task.stepOrder,
+        notes: typeof body.notes === "string" ? body.notes : null,
+      });
+
       await tx.saaApprovalTask.update({
         where: { id: task.id },
         data: { status: decision, notes: typeof body.notes === "string" ? body.notes : null },
@@ -52,6 +65,10 @@ export async function POST(
           approverId: user.id,
           status: decision,
           notes: body.notes ? `${task.step.role}: ${String(body.notes)}` : task.step.role,
+          digitalSignature: signature.signature,
+          signedAt: new Date(signature.timestamp),
+          signedByName: approver?.name || "Approver",
+          signedByRole: task.step.role,
         },
       });
       await tx.notification.updateMany({

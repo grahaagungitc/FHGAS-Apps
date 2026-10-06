@@ -13,6 +13,7 @@ interface SaaDynamicFieldProps {
   value: unknown;
   departments?: { id: string; name: string }[];
   onChange: (key: string, value: unknown) => void;
+  readOnly?: boolean;
 }
 
 function getOptions(rawOptions: unknown): string[] {
@@ -32,10 +33,16 @@ export default function SaaDynamicField({
   value,
   departments = [],
   onChange,
+  readOnly = false,
 }: SaaDynamicFieldProps) {
   const options = getOptions(field.options);
   const requiredMark = field.isRequired && <span className="text-red-600"> *</span>;
   const controlClass = "w-full border-2 border-slate-900 bg-white p-2.5 text-sm";
+  const handleChange = (nextValue: unknown) => {
+    if (!readOnly) {
+      onChange(field.fieldKey, nextValue);
+    }
+  };
 
   if (field.source === "REQUESTER_EMAIL") {
     return (
@@ -44,7 +51,8 @@ export default function SaaDynamicField({
         <input
           type="email"
           value={typeof value === "string" ? value : ""}
-          readOnly
+          readOnly={readOnly || true}
+          disabled={readOnly}
           required={field.isRequired}
           className={`${controlClass} mt-1 border-slate-300 bg-slate-100 text-slate-600`}
         />
@@ -94,7 +102,8 @@ export default function SaaDynamicField({
           type="text"
           value={typeof value === "string" ? value : ""}
           required={field.isRequired}
-          onChange={(event) => onChange(field.fieldKey, event.target.value)}
+          disabled={readOnly}
+          onChange={(event) => handleChange(event.target.value)}
           className={`${controlClass} mt-1`}
         />
       </label>
@@ -108,7 +117,8 @@ export default function SaaDynamicField({
           type="checkbox"
           checked={value === true}
           required={field.isRequired}
-          onChange={(event) => onChange(field.fieldKey, event.target.checked)}
+          disabled={readOnly}
+          onChange={(event) => handleChange(event.target.checked)}
           className="h-4 w-4 accent-cyan-700"
         />
         {field.label}{requiredMark}
@@ -146,7 +156,8 @@ export default function SaaDynamicField({
                 value={option}
                 checked={value === option}
                 required={field.isRequired}
-                onChange={() => onChange(field.fieldKey, option)}
+                disabled={readOnly}
+                onChange={() => handleChange(option)}
                 className="h-4 w-4 accent-cyan-700"
               />
               {option}
@@ -183,9 +194,16 @@ export default function SaaDynamicField({
               ? field.fieldType.toLowerCase()
               : "text"
         }
-        value={typeof value === "string" || typeof value === "number" ? value : ""}
+        value={
+          typeof value === "string" || typeof value === "number"
+            ? value
+            : value instanceof Date
+              ? value.toISOString().slice(0, 10)
+              : ""
+        }
         required={field.isRequired}
-        onChange={(event) => onChange(field.fieldKey, event.target.value)}
+        disabled={readOnly}
+        onChange={(event) => handleChange(event.target.value)}
         className={`${controlClass} mt-1`}
       />
     </label>

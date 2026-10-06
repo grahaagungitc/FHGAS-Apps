@@ -8,7 +8,8 @@ export async function middleware(req: NextRequest) {
   // 1. Izinkan request static assets, favicon, & next-auth internal
   if (
     pathname.startsWith("/_next") ||
-    pathname.startsWith("/api/auth")
+    pathname.startsWith("/api/auth") ||
+    pathname === "/api/saa/verify"
   ) {
     return NextResponse.next();
   }

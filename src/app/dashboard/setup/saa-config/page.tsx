@@ -64,6 +64,15 @@ export default function SaaConfigPage() {
   const [selectedConfigId, setSelectedConfigId] = useState("");
   const [approvalRoles, setApprovalRoles] = useState<ApprovalRoleOption[]>([]);
   const [sectionsDraft, setSectionsDraft] = useState<string[]>([]);
+
+  const normalizeSectionName = (section: string) => {
+    const value = section.trim();
+    if (!value) return "Access Details";
+    if (value.toLowerCase() === "detail") return "Access Details";
+    if (value.toLowerCase() === "general") return "General Information";
+    if (value.toLowerCase() === "action") return "Action Requested";
+    return value;
+  };
   const [sectionFieldsDraft, setSectionFieldsDraft] = useState<FieldConfig[]>([]);
   const [requestTypeDrafts, setRequestTypeDrafts] = useState<FieldConfig[]>([]);
   const [loading, setLoading] = useState(true);
@@ -121,7 +130,14 @@ export default function SaaConfigPage() {
 
   useEffect(() => {
     const formFields = selectedForm?.fields || [];
-    setSectionsDraft(selectedForm?.sections || [...new Set(formFields.map((field) => field.section))]);
+    const normalizedSections = Array.from(
+      new Set(
+        [...(selectedForm?.sections || formFields.map((field) => field.section)), "Access Details"]
+          .filter(Boolean)
+          .map((section) => normalizeSectionName(section))
+      )
+    );
+    setSectionsDraft(normalizedSections);
     setSectionFieldsDraft(formFields.map((field) => ({ ...field, options: parseFieldOptions(field.options) })));
     setRequestTypeDrafts(
       formFields

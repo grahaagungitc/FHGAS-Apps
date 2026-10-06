@@ -1,5 +1,35 @@
+import crypto from "node:crypto";
 import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
+
+function canonicalizeValue(value: unknown): unknown {
+  if (value instanceof Date) return value.toISOString();
+  if (Array.isArray(value)) return value.map(canonicalizeValue);
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>)
+        .sort(([left], [right]) => left.localeCompare(right))
+        .map(([key, nestedValue]) => [key, canonicalizeValue(nestedValue)]),
+    );
+  }
+  return value;
+}
+
+export function createDigitalSignature(
+  payload: Record<string, unknown>,
+  timestampOverride?: string,
+) {
+  const timestamp = timestampOverride ?? new Date().toISOString();
+  const normalized = JSON.stringify(canonicalizeValue({
+    ...payload,
+    timestamp,
+  }));
+
+  return {
+    timestamp,
+    signature: crypto.createHash("sha256").update(normalized).digest("hex"),
+  };
+}
 
 export class SaaRequestError extends Error {
   constructor(message: string, public statusCode = 400) {
@@ -162,6 +192,25 @@ export async function submitSaaRequest(input: SubmitSaaRequestInput) {
         approvalTasks: { create: assignedSteps },
       },
       include: { approvalTasks: { orderBy: { stepOrder: "asc" } } },
+    });
+
+    const requesterSignature = createDigitalSignature({
+      requestId: request.id,
+      requestNumber: request.requestNumber,
+      signerName: requesterName.trim(),
+      signerRole: "PEMOHON",
+      action: "REQUEST_SUBMITTED",
+      decision: "SUBMITTED",
+    });
+
+    await tx.saaRequest.update({
+      where: { id: request.id },
+      data: {
+        requesterSignature: requesterSignature.signature,
+        requesterSignedAt: new Date(requesterSignature.timestamp),
+        requesterSignedByName: requesterName.trim(),
+        requesterSignedByRole: "PEMOHON",
+      },
     });
 
     await tx.notification.create({
