@@ -12,9 +12,9 @@ interface CreateSaaInput {
   email?: string;
   position?: string;
   departmentName?: string;
-  actionType: "Create Account" | "Modify Account" | "Suspend Account" | "Delete Account";
+  actionType?: string;
   accessDetails: Record<string, any>; // Menampung isian dinamis
-  reason: string;
+  reason?: string;
 }
 
 export async function createSaaRequest(data: CreateSaaInput) {

@@ -6,10 +6,12 @@ interface SaaDynamicFieldProps {
     fieldKey: string;
     label: string;
     fieldType: string;
+    source?: string | null;
     options?: unknown;
     isRequired?: boolean;
   };
   value: unknown;
+  departments?: { id: string; name: string }[];
   onChange: (key: string, value: unknown) => void;
 }
 
@@ -25,10 +27,79 @@ function getOptions(rawOptions: unknown): string[] {
   return [];
 }
 
-export default function SaaDynamicField({ field, value, onChange }: SaaDynamicFieldProps) {
+export default function SaaDynamicField({
+  field,
+  value,
+  departments = [],
+  onChange,
+}: SaaDynamicFieldProps) {
   const options = getOptions(field.options);
   const requiredMark = field.isRequired && <span className="text-red-600"> *</span>;
   const controlClass = "w-full border-2 border-slate-900 bg-white p-2.5 text-sm";
+
+  if (field.source === "REQUESTER_EMAIL") {
+    return (
+      <label className="block text-xs font-bold text-slate-700">
+        {field.label}{requiredMark}
+        <input
+          type="email"
+          value={typeof value === "string" ? value : ""}
+          readOnly
+          required={field.isRequired}
+          className={`${controlClass} mt-1 border-slate-300 bg-slate-100 text-slate-600`}
+        />
+      </label>
+    );
+  }
+
+  if (field.source === "DEPARTMENT") {
+    return (
+      <label className="block text-xs font-bold text-slate-700">
+        {field.label}{requiredMark}
+        <select
+          value={typeof value === "string" ? value : ""}
+          required={field.isRequired}
+          onChange={(event) => onChange(field.fieldKey, event.target.value)}
+          className={`${controlClass} mt-1`}
+        >
+          <option value="">Pilih {field.label}</option>
+          {departments.map((department) => (
+            <option key={department.id} value={department.id}>{department.name}</option>
+          ))}
+        </select>
+      </label>
+    );
+  }
+
+  if (field.source === "REASON") {
+    return (
+      <label className="block text-xs font-bold text-slate-700">
+        {field.label}{requiredMark}
+        <textarea
+          rows={3}
+          value={typeof value === "string" ? value : ""}
+          required={field.isRequired}
+          onChange={(event) => onChange(field.fieldKey, event.target.value)}
+          className={`${controlClass} mt-1`}
+        />
+      </label>
+    );
+  }
+
+  if (field.source === "REQUESTER_NAME") {
+    return (
+      <label className="block text-xs font-bold text-slate-700">
+        {field.label}{requiredMark}
+        <input
+          type="text"
+          value={typeof value === "string" ? value : ""}
+          required={field.isRequired}
+          onChange={(event) => onChange(field.fieldKey, event.target.value)}
+          className={`${controlClass} mt-1`}
+        />
+      </label>
+    );
+  }
 
   if (field.fieldType === "CHECKBOX") {
     return (
@@ -105,7 +176,13 @@ export default function SaaDynamicField({ field, value, onChange }: SaaDynamicFi
     <label className="block text-xs font-bold text-slate-700">
       {field.label}{requiredMark}
       <input
-        type={field.fieldType === "NUMBER" ? "number" : "text"}
+        type={
+          field.source === "REQUESTER_NAME"
+            ? "text"
+            : ["EMAIL", "NUMBER", "DATE", "TIME", "TEL", "URL", "PASSWORD"].includes(field.fieldType)
+              ? field.fieldType.toLowerCase()
+              : "text"
+        }
         value={typeof value === "string" || typeof value === "number" ? value : ""}
         required={field.isRequired}
         onChange={(event) => onChange(field.fieldKey, event.target.value)}

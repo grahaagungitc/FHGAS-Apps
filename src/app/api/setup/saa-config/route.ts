@@ -2,31 +2,36 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 
 const prisma = db;
+export const dynamic = "force-dynamic";
 
 async function resolveConfigLinks(fields: any[] = [], steps: any[] = []) {
   const fieldLinks = await Promise.all(
     fields.map(async (field, index) => {
-      if (field.fieldId) {
+      const fieldMetadata = {
+        order: field.order ?? index + 1,
+        section: (field.section || "Access Details").trim(),
+        source: field.source || null,
+        label: field.label,
+        fieldType: field.fieldType || "TEXT",
+        isRequired: Boolean(field.isRequired),
+        options: field.options ?? undefined,
+      };
+
+      if (field.fieldId || field.id) {
         return {
-          fieldId: field.fieldId,
-          order: field.order ?? index + 1,
-          section: field.section || "DETAIL",
+          fieldId: field.fieldId || field.id,
+          ...fieldMetadata,
         };
       }
 
       const savedField = await prisma.saaField.upsert({
         where: { fieldKey: field.fieldKey },
-        update: {
-          label: field.label,
-          fieldType: field.fieldType || "TEXT",
-          options: field.options ?? undefined,
-          isRequired: Boolean(field.isRequired),
-        },
+        update: {},
         create: {
           fieldKey: field.fieldKey,
           label: field.label,
           fieldType: field.fieldType || "TEXT",
-          section: field.section || "DETAIL",
+          section: field.section || "Access Details",
           options: field.options ?? undefined,
           isRequired: Boolean(field.isRequired),
         },
@@ -34,22 +39,31 @@ async function resolveConfigLinks(fields: any[] = [], steps: any[] = []) {
 
       return {
         fieldId: savedField.id,
-        order: field.order ?? index + 1,
-        section: field.section || "DETAIL",
+        ...fieldMetadata,
       };
     })
   );
 
   const stepLinks = await Promise.all(
     steps.map(async (step, index) => {
-      if (step.stepId) {
-        return { stepId: step.stepId, step: step.step ?? index + 1 };
+      if (step.stepId || step.id) {
+        return {
+          stepId: step.stepId || step.id,
+          step: step.step ?? index + 1,
+          role: step.role ?? null,
+          label: step.label ?? null,
+        };
       }
 
       const savedStep = await prisma.saaApprovalStep.create({
         data: { role: step.role, label: step.label },
       });
-      return { stepId: savedStep.id, step: step.step ?? index + 1 };
+      return {
+        stepId: savedStep.id,
+        step: step.step ?? index + 1,
+        role: step.role ?? savedStep.role,
+        label: step.label ?? savedStep.label,
+      };
     })
   );
 
@@ -64,6 +78,22 @@ function hasValidApprovalOrder(steps: any[]) {
     new Set(order).size === order.length &&
     order.every((value) => value <= order.length)
   );
+}
+
+function resolveSections(sections: unknown, fields: any[]) {
+  const requestedSections = Array.isArray(sections)
+    ? sections
+    : [...new Set(fields.map((field) => field.section || "Access Details"))];
+  if (!requestedSections.every((section) => typeof section === "string" && section.trim())) {
+    return null;
+  }
+
+  const normalizedSections = requestedSections.map((section: string) => section.trim());
+  if (new Set(normalizedSections).size !== normalizedSections.length) return null;
+  if (fields.some((field) => !normalizedSections.includes((field.section || "Access Details").trim()))) {
+    return null;
+  }
+  return normalizedSections;
 }
 
 // GET: Ambil daftar SAA Config beserta Master Field & Approval Steps terhubung
@@ -90,21 +120,34 @@ export async function GET() {
       name: config.name,
       description: config.description,
       isActive: config.isActive,
+      sections: [
+        ...(Array.isArray(config.sections)
+        ? config.sections.filter((section): section is string => typeof section === "string")
+        : []),
+        ...config.fields
+          .map((field) => field.section)
+          .filter((section, index, allSections) =>
+            !allSections.slice(0, index).includes(section) &&
+            !(Array.isArray(config.sections) && config.sections.includes(section))
+          ),
+      ],
       fields: config.fields.map((f) => ({
         id: f.field.id,
+        fieldId: f.field.id,
         fieldKey: f.field.fieldKey,
-        label: f.field.label,
-        fieldType: f.field.fieldType,
+        label: f.label ?? f.field.label,
+        fieldType: f.fieldType ?? f.field.fieldType,
         section: f.section,
-        options: f.field.options,
-        isRequired: f.field.isRequired,
+        source: f.source,
+        options: f.options ?? f.field.options,
+        isRequired: f.isRequired ?? f.field.isRequired,
         order: f.order,
       })),
       approvalSteps: config.approvalSteps.map((s) => ({
         id: s.approvalStep.id,
         step: s.step,
-        role: s.approvalStep.role,
-        label: s.approvalStep.label,
+        role: s.role ?? s.approvalStep.role,
+        label: s.label ?? s.approvalStep.label,
       })),
     }));
 
@@ -150,8 +193,17 @@ export async function POST(req: Request) {
       );
     }
 
+    const requestedFields = body.fields ?? body.fieldIds ?? [];
+    const sections = resolveSections(body.sections, requestedFields);
+    if (!sections) {
+      return NextResponse.json(
+        { message: "Setiap section harus unik dan semua field harus ditempatkan pada section yang tersedia." },
+        { status: 400 }
+      );
+    }
+
     const { fieldLinks, stepLinks } = await resolveConfigLinks(
-      body.fields ?? body.fieldIds,
+      requestedFields,
       body.approvalSteps ?? body.stepIds
     );
 
@@ -163,6 +215,7 @@ export async function POST(req: Request) {
         name,
         description,
         isActive: body.isActive ?? true,
+        sections,
         fields: {
           create: fieldLinks,
         },
@@ -207,8 +260,17 @@ export async function PUT(req: Request) {
       );
     }
 
+    const requestedFields = body.fields ?? body.fieldIds ?? [];
+    const sections = resolveSections(body.sections, requestedFields);
+    if (!sections) {
+      return NextResponse.json(
+        { message: "Setiap section harus unik dan semua field harus ditempatkan pada section yang tersedia." },
+        { status: 400 }
+      );
+    }
+
     const { fieldLinks, stepLinks } = await resolveConfigLinks(
-      body.fields ?? body.fieldIds,
+      requestedFields,
       body.approvalSteps ?? body.stepIds
     );
 
@@ -225,6 +287,7 @@ export async function PUT(req: Request) {
           name,
           description,
           isActive: isActive !== undefined ? isActive : true,
+          sections,
           fields: {
             create: fieldLinks,
           },

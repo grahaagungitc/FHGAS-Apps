@@ -53,8 +53,6 @@ export async function POST(request: Request) {
     const body = await request.json();
     if (
       typeof body.formConfigId !== "string" ||
-      typeof body.targetDepartmentId !== "string" ||
-      typeof body.requesterName !== "string" ||
       !body.formData ||
       typeof body.formData !== "object" ||
       Array.isArray(body.formData)
@@ -65,9 +63,9 @@ export async function POST(request: Request) {
     const created = await submitSaaRequest({
       userId: user.id,
       formConfigId: body.formConfigId,
-      targetDepartmentId: body.targetDepartmentId,
-      requesterName: body.requesterName,
-      actionType: typeof body.actionType === "string" ? body.actionType : "Create Account",
+      targetDepartmentId: typeof body.targetDepartmentId === "string" ? body.targetDepartmentId : undefined,
+      requesterName: typeof body.requesterName === "string" ? body.requesterName : undefined,
+      actionType: typeof body.actionType === "string" ? body.actionType : undefined,
       formData: body.formData,
       reason: typeof body.reason === "string" ? body.reason : "",
     });

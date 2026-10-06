@@ -10,6 +10,7 @@ type FieldItem = {
   fieldKey: string;
   label: string;
   fieldType: string;
+  source?: string | null;
   section?: string | null;
   options?: unknown;
   isRequired?: boolean;
@@ -29,20 +30,40 @@ type SaaFormConfig = {
   name: string;
   description?: string | null;
   isActive: boolean;
+  sections: string[];
   fields: FieldItem[];
   approvalSteps: ApprovalStepItem[];
 };
 
 type Department = { id: string; name: string; code?: string | null };
+type UserProfile = {
+  name?: string | null;
+  email?: string | null;
+  departmentId?: string | null;
+};
+
+function getInitialFormValues(
+  fields: FieldItem[],
+  profile: UserProfile,
+  defaultDepartmentId: string
+) {
+  return Object.fromEntries(
+    fields.flatMap((field) => {
+      if (field.source === "REQUESTER_NAME") return [[field.fieldKey, profile.name || ""]];
+      if (field.source === "REQUESTER_EMAIL") return [[field.fieldKey, profile.email || ""]];
+      if (field.source === "DEPARTMENT") return [[field.fieldKey, defaultDepartmentId]];
+      if (field.source === "REASON") return [[field.fieldKey, ""]];
+      return [];
+    })
+  );
+}
 
 export default function SaaCreatePage() {
   const [forms, setForms] = useState<SaaFormConfig[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [selectedFormId, setSelectedFormId] = useState("");
   const [selectedDepartmentId, setSelectedDepartmentId] = useState("");
-  const [requesterName, setRequesterName] = useState("");
-  const [requesterEmail, setRequesterEmail] = useState("");
-  const [reason, setReason] = useState("");
+  const [userProfile, setUserProfile] = useState<UserProfile>({});
   const [formValues, setFormValues] = useState<Record<string, unknown>>({});
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -74,14 +95,16 @@ export default function SaaCreatePage() {
       const activeForms = (formData as SaaFormConfig[]).filter((form) => form.isActive);
       setForms(activeForms);
       setDepartments(departmentData);
-      setRequesterName(userData.name || "");
-      setRequesterEmail(userData.email || "");
-      if (activeForms.length > 0) setSelectedFormId(activeForms[0].id);
-      if (departmentData.length > 0) {
-        const ownDepartment = departmentData.find(
-          (department: Department) => department.id === userData.departmentId
-        );
-        setSelectedDepartmentId(ownDepartment?.id || departmentData[0].id);
+      setUserProfile(userData);
+      const ownDepartment = departmentData.find(
+        (department: Department) => department.id === userData.departmentId
+      );
+      const defaultDepartmentId = ownDepartment?.id || departmentData[0]?.id || "";
+      setSelectedDepartmentId(defaultDepartmentId);
+      const firstForm = activeForms[0];
+      if (firstForm) {
+        setSelectedFormId(firstForm.id);
+        setFormValues(getInitialFormValues(firstForm.fields, userData, defaultDepartmentId));
       }
     } catch (loadError) {
       console.error("Failed to load SAA form data:", loadError);
@@ -105,18 +128,14 @@ export default function SaaCreatePage() {
 
   const handleFormChange = (formId: string) => {
     setSelectedFormId(formId);
-    setFormValues({});
+    const form = forms.find((item) => item.id === formId);
+    setFormValues(form ? getInitialFormValues(form.fields, userProfile, selectedDepartmentId) : {});
   };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const actionType = formValues.actionType;
-    if (!selectedFormId || !selectedDepartmentId || !requesterName.trim() || !reason.trim()) {
-      setError("Lengkapi tipe SAA, nama, departemen, dan alasan pengajuan.");
-      return;
-    }
-    if (typeof actionType !== "string" || !actionType.trim()) {
-      setError("Konfigurasi tipe SAA harus memiliki field actionType pada Access Requested.");
+    if (!selectedFormId) {
+      setError("Pilih tipe form SAA.");
       return;
     }
 
@@ -129,9 +148,6 @@ export default function SaaCreatePage() {
         body: JSON.stringify({
           formConfigId: selectedFormId,
           targetDepartmentId: selectedDepartmentId,
-          requesterName,
-          actionType,
-          reason,
           formData: formValues,
         }),
       });
@@ -171,7 +187,9 @@ export default function SaaCreatePage() {
           <FileSignature className="h-6 w-6 text-slate-900" />
         </div>
         <div>
-          <h1 className="text-xl font-black uppercase text-slate-900">System Access Authorization</h1>
+          <h1 className="text-xl font-black uppercase text-slate-900">
+            {selectedForm?.name || "System Access Authorization"}
+          </h1>
           <p className="mt-1 text-xs text-slate-600">Pilih tipe SAA; field dan approval mengikuti konfigurasi tipe tersebut.</p>
         </div>
       </header>
@@ -190,14 +208,8 @@ export default function SaaCreatePage() {
           {selectedForm?.description && <p className="border-l-4 border-cyan-600 bg-cyan-50 p-3 text-sm text-slate-700">{selectedForm.description}</p>}
 
           <SaaRequestSections
-            requesterName={requesterName}
-            setRequesterName={setRequesterName}
-            requesterEmail={requesterEmail}
-            departmentId={selectedDepartmentId}
             departments={departments}
-            setDepartmentId={setSelectedDepartmentId}
-            reason={reason}
-            setReason={setReason}
+            sections={selectedForm?.sections || []}
             fields={fields}
             values={formValues}
             onFieldChange={handleFieldChange}
@@ -212,7 +224,7 @@ export default function SaaCreatePage() {
                 <UserCheck className="h-4 w-4 text-cyan-300" />
                 <div>
                   <p className="text-[10px] font-bold uppercase text-cyan-300">Request By</p>
-                  <p className="text-xs font-bold">{requesterName || "Nama pemohon"}</p>
+                  <p className="text-xs font-bold">{userProfile.name || "Pemohon"}</p>
                 </div>
               </div>
               {approvalSteps.map((step) => (

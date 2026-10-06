@@ -1,6 +1,12 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 
+async function isConfigurableRole(roleCode: unknown) {
+  if (typeof roleCode !== "string") return false;
+  const role = await db.systemRole.findUnique({ where: { code: roleCode } });
+  return Boolean(role && !role.isSystem);
+}
+
 // GET: Ambil semua Master Approval Steps
 export async function GET() {
   try {
@@ -36,6 +42,9 @@ export async function POST(req: Request) {
         { message: "Role ID dan Label Approver wajib diisi." },
         { status: 400 }
       );
+    }
+    if (!(await isConfigurableRole(role))) {
+      return NextResponse.json({ message: "Pilih role approver yang terdaftar di Setup." }, { status: 400 });
     }
 
     const newStep = await db.saaApprovalStep.create({
@@ -73,6 +82,9 @@ export async function PUT(req: Request) {
         { message: "ID Approval Step diperlukan." },
         { status: 400 }
       );
+    }
+    if (!(await isConfigurableRole(role))) {
+      return NextResponse.json({ message: "Pilih role approver yang terdaftar di Setup." }, { status: 400 });
     }
 
     const updatedStep = await db.$transaction(async (tx) => {

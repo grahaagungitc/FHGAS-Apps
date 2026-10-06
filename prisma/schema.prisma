@@ -223,6 +223,7 @@ model SaaFormConfig {
   name          String                // Nama form
   description   String?
   isActive      Boolean               @default(true)
+  sections      Json?
   createdAt     DateTime              @default(now())
   updatedAt     DateTime              @updatedAt
 
@@ -255,6 +256,11 @@ model SaaFormField {
   fieldId      String
   order        Int           @default(0) // Urutan tampilan khusus pada Form Tipe ini
   section      String        @default("DETAIL")
+  source       String?
+  label        String?
+  fieldType    String?
+  isRequired   Boolean?
+  options      Json?
 
   formConfig   SaaFormConfig @relation(fields: [formConfigId], references: [id], onDelete: Cascade)
   field        SaaField      @relation(fields: [fieldId], references: [id], onDelete: Cascade)
@@ -281,6 +287,8 @@ model SaaFormApprovalStep {
   formConfigId String
   stepId       String
   step         Int             // Urutan step (1, 2, 3...) khusus pada Form Tipe ini
+  role         String?
+  label        String?
 
   formConfig   SaaFormConfig   @relation(fields: [formConfigId], references: [id], onDelete: Cascade)
   approvalStep SaaApprovalStep @relation(fields: [stepId], references: [id], onDelete: Cascade)

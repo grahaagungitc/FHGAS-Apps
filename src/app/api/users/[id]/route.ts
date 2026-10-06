@@ -35,20 +35,18 @@ export async function PUT(
           ...(existingUser.isFinanceLeader ? ["FINANCE_LEADER"] : []),
           ...(existingUser.isHotelManager ? ["HOTEL_MANAGER"] : []),
           ...(existingUser.isFOLeader ? ["FO_LEADER"] : []),
-          ...(existingUser.isIT ? ["IT"] : []),
+              ...(existingUser.isIT ? ["IT_VERIFICATION"] : []),
         ];
 
     // 1. Mapping Boolean Flags
-    const isDeptHead = rolesArray.includes("HOD");
-    const isFinanceLeader = rolesArray.includes("FINANCE_LEADER");
-    const isHotelManager = rolesArray.includes("HOTEL_MANAGER");
-    const isFOLeader = rolesArray.includes("FO_LEADER");
-    const isIT = rolesArray.includes("IT") || rolesArray.includes("IT TEAM");
+            const isDeptHead = rolesArray.includes("HOD");
+            const isFinanceLeader = rolesArray.some((role) => ["FINANCE", "FINANCE_LEADER"].includes(role));
+            const isHotelManager = rolesArray.some((role) => ["GM/HM", "HOTEL_MANAGER"].includes(role));
+            const isFOLeader = rolesArray.includes("FO_LEADER");
+            const isIT = rolesArray.some((role) => ["IT", "IT TEAM", "IT_VERIFICATION"].includes(role));
 
-    // 2. Mapping SystemRole (Hanya ADMIN dan STAFF)
-    const systemRoleCodes = rolesArray.filter((r) =>
-      ["ADMIN", "STAFF"].includes(r)
-    );
+    // Persist every configured role code so custom approver roles can be resolved.
+    const systemRoleCodes = [...new Set(rolesArray)];
     if (systemRoleCodes.length === 0) systemRoleCodes.push("STAFF");
 
     const isCurrentAdmin = existingUser.userRoles.some(
@@ -67,19 +65,13 @@ export async function PUT(
     }
 
     // Pastikan SystemRole ada di Database
-    const systemRoleIds: string[] = [];
-    for (const code of systemRoleCodes) {
-      const sysRole = await prisma.systemRole.upsert({
-        where: { code },
-        update: {},
-        create: {
-          code,
-          name: code === "ADMIN" ? "Administrator" : "Staff",
-          isSystem: true,
-        },
-      });
-      systemRoleIds.push(sysRole.id);
+    const roleRecords = await prisma.systemRole.findMany({
+      where: { code: { in: systemRoleCodes } },
+    });
+    if (roleRecords.length !== systemRoleCodes.length) {
+      return NextResponse.json({ message: "Pilih role yang tersedia di Setup." }, { status: 400 });
     }
+    const systemRoleIds = roleRecords.map((role) => role.id);
 
     // 3. Update User & Relasi UserRole menggunakan Transaction
     const updatedUser = await prisma.$transaction(async (tx) => {

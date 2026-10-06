@@ -27,16 +27,36 @@ interface MasterStep {
   assignedForms: { formConfig: SaaFormConfigOption }[];
 }
 
-export default function SaaMasterFieldsPage() {
-  const [activeTab, setActiveTab] = useState<"fields" | "approvers">("fields");
+interface RoleOption {
+  id: string;
+  code: string;
+  name: string;
+  description?: string | null;
+  isSystem: boolean;
+}
+
+type MasterTab = "fields" | "approvers" | "roles";
+
+interface SaaMasterFieldsPageProps {
+  initialTab?: MasterTab;
+  showTabs?: boolean;
+}
+
+export default function SaaMasterFieldsPage({
+  initialTab = "fields",
+  showTabs = true,
+}: SaaMasterFieldsPageProps) {
+  const [activeTab, setActiveTab] = useState<MasterTab>(initialTab);
   const [fields, setFields] = useState<MasterField[]>([]);
   const [steps, setSteps] = useState<MasterStep[]>([]);
+  const [roles, setRoles] = useState<RoleOption[]>([]);
   const [formConfigs, setFormConfigs] = useState<SaaFormConfigOption[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Modal States
   const [isFieldModalOpen, setIsFieldModalOpen] = useState(false);
   const [isStepModalOpen, setIsStepModalOpen] = useState(false);
+  const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
 
   // Field Form States
@@ -44,12 +64,15 @@ export default function SaaMasterFieldsPage() {
   const [fieldLabel, setFieldLabel] = useState("");
   const [fieldType, setFieldType] = useState("TEXT");
   const [fieldOptions, setFieldOptions] = useState("");
-  const [section, setSection] = useState("DETAIL");
+  const [section, setSection] = useState("Access Details");
   const [isRequired, setIsRequired] = useState(false);
 
   // Approver Form States
   const [stepRole, setStepRole] = useState("HOD");
   const [stepLabel, setStepLabel] = useState("");
+  const [roleCode, setRoleCode] = useState("");
+  const [roleName, setRoleName] = useState("");
+  const [roleDescription, setRoleDescription] = useState("");
 
   // Shared Assignment State
   const [selectedFormIds, setSelectedFormIds] = useState<string[]>([]);
@@ -58,22 +81,29 @@ export default function SaaMasterFieldsPage() {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    setActiveTab(initialTab);
+  }, [initialTab]);
+
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [resFields, resSteps, resConfigs] = await Promise.all([
+      const [resFields, resSteps, resConfigs, resRoles] = await Promise.all([
         fetch("/api/setup/saa-fields"),
         fetch("/api/setup/saa-steps"),
         fetch("/api/setup/saa-config"),
+        fetch("/api/setup/saa-roles"),
       ]);
 
       const fieldsData = await resFields.json();
       const stepsData = await resSteps.json();
       const configsData = await resConfigs.json();
+      const rolesData = await resRoles.json();
 
       if (fieldsData.fields) setFields(fieldsData.fields);
       if (Array.isArray(stepsData)) setSteps(stepsData);
       if (Array.isArray(configsData)) setFormConfigs(configsData);
+      if (Array.isArray(rolesData)) setRoles(rolesData);
     } catch (err) {
       console.error("Gagal memuat Master Repository Data", err);
     } finally {
@@ -106,7 +136,15 @@ export default function SaaMasterFieldsPage() {
           setFieldOptions(rawOptions);
         }
       } else setFieldOptions("");
-      setSection(item.section || "DETAIL");
+      setSection(
+        item.section === "GENERAL"
+          ? "General Information"
+          : item.section === "ACTION"
+            ? "Action Requested"
+            : item.section === "DETAIL"
+              ? "Access Details"
+              : item.section || "Access Details"
+      );
       setIsRequired(item.isRequired);
       setSelectedFormIds(item.assignedForms.map((af) => af.formConfig.id));
     } else {
@@ -115,7 +153,7 @@ export default function SaaMasterFieldsPage() {
       setFieldLabel("");
       setFieldType("TEXT");
       setFieldOptions("");
-      setSection("DETAIL");
+      setSection("Access Details");
       setIsRequired(false);
       setSelectedFormIds([]);
     }
@@ -212,9 +250,48 @@ export default function SaaMasterFieldsPage() {
     fetchData();
   };
 
+  const handleOpenRoleModal = (role?: RoleOption) => {
+    setEditingId(role?.id || null);
+    setRoleCode(role?.code || "");
+    setRoleName(role?.name || "");
+    setRoleDescription(role?.description || "");
+    setIsRoleModalOpen(true);
+  };
+
+  const handleSubmitRole = async (event: React.FormEvent) => {
+    event.preventDefault();
+    const response = await fetch("/api/setup/saa-roles", {
+      method: editingId ? "PUT" : "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        id: editingId,
+        code: roleCode,
+        name: roleName,
+        description: roleDescription,
+      }),
+    });
+    if (!response.ok) {
+      const result = await response.json();
+      alert(result.message || "Gagal menyimpan role.");
+      return;
+    }
+    setIsRoleModalOpen(false);
+    fetchData();
+  };
+
+  const handleDeleteRole = async (role: RoleOption) => {
+    if (!confirm(`Hapus role ${role.code}?`)) return;
+    const response = await fetch(`/api/setup/saa-roles?id=${role.id}`, { method: "DELETE" });
+    if (!response.ok) {
+      const result = await response.json();
+      alert(result.message || "Gagal menghapus role.");
+      return;
+    }
+    fetchData();
+  };
+
   return (
     <div className="p-6 space-y-6">
-      {/* Header */}
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
@@ -222,50 +299,35 @@ export default function SaaMasterFieldsPage() {
             Master Repository SAA
           </h1>
           <p className="text-sm text-slate-500">
-            Kelola Master Field Isian Form dan Master Alur Approver terpusat.
+            Kelola Master Field, approver, dan role code SAA.
           </p>
         </div>
-
         {activeTab === "fields" ? (
-          <button
-            onClick={() => handleOpenFieldModal()}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg flex items-center gap-2 text-sm font-semibold shadow-sm transition"
-          >
+          <button onClick={() => handleOpenFieldModal()} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg flex items-center gap-2 text-sm font-semibold shadow-sm transition">
             <Plus size={16} /> Tambah Master Field
           </button>
-        ) : (
-          <button
-            onClick={() => handleOpenStepModal()}
-            className="bg-cyan-600 hover:bg-cyan-700 text-white px-4 py-2.5 rounded-lg flex items-center gap-2 text-sm font-semibold shadow-sm transition"
-          >
+        ) : activeTab === "approvers" ? (
+          <button onClick={() => handleOpenStepModal()} className="bg-cyan-600 hover:bg-cyan-700 text-white px-4 py-2.5 rounded-lg flex items-center gap-2 text-sm font-semibold shadow-sm transition">
             <Plus size={16} /> Tambah Master Approver
+          </button>
+        ) : (
+          <button onClick={() => handleOpenRoleModal()} className="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2.5 rounded-lg flex items-center gap-2 text-sm font-semibold shadow-sm transition">
+            <Plus size={16} /> Tambah Role Code
           </button>
         )}
       </div>
 
-      {/* Navigation Tabs */}
-      <div className="flex border-b border-slate-200 gap-4">
-        <button
-          onClick={() => setActiveTab("fields")}
-          className={`pb-3 text-sm font-bold flex items-center gap-2 transition-all border-b-2 ${
-            activeTab === "fields"
-              ? "border-blue-600 text-blue-600"
-              : "border-transparent text-slate-500 hover:text-slate-800"
-          }`}
-        >
+      {showTabs && <div className="flex border-b border-slate-200 gap-4">
+        <button onClick={() => setActiveTab("fields")} className={`pb-3 text-sm font-bold flex items-center gap-2 border-b-2 ${activeTab === "fields" ? "border-blue-600 text-blue-600" : "border-transparent text-slate-500 hover:text-slate-800"}`}>
           <ListFilter size={16} /> Master Fields ({fields.length})
         </button>
-        <button
-          onClick={() => setActiveTab("approvers")}
-          className={`pb-3 text-sm font-bold flex items-center gap-2 transition-all border-b-2 ${
-            activeTab === "approvers"
-              ? "border-cyan-600 text-cyan-600"
-              : "border-transparent text-slate-500 hover:text-slate-800"
-          }`}
-        >
+        <button onClick={() => setActiveTab("approvers")} className={`pb-3 text-sm font-bold flex items-center gap-2 border-b-2 ${activeTab === "approvers" ? "border-cyan-600 text-cyan-600" : "border-transparent text-slate-500 hover:text-slate-800"}`}>
           <ShieldCheck size={16} /> Master Approvers / Steps ({steps.length})
         </button>
-      </div>
+        <button onClick={() => setActiveTab("roles")} className={`pb-3 text-sm font-bold flex items-center gap-2 border-b-2 ${activeTab === "roles" ? "border-slate-900 text-slate-900" : "border-transparent text-slate-500 hover:text-slate-800"}`}>
+          <ShieldCheck size={16} /> Role Codes ({roles.length})
+        </button>
+      </div>}
 
       {/* TAB 1: MASTER FIELDS TABLE */}
       {activeTab === "fields" && (
@@ -415,6 +477,42 @@ export default function SaaMasterFieldsPage() {
         </div>
       )}
 
+      {activeTab === "roles" && (
+        <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+          <table className="w-full text-left text-sm text-slate-600">
+            <thead className="border-b bg-slate-50 text-xs font-bold uppercase text-slate-500">
+              <tr>
+                <th className="p-4">Role Code</th>
+                <th className="p-4">Nama Role</th>
+                <th className="p-4">Deskripsi</th>
+                <th className="p-4">Jenis</th>
+                <th className="p-4 text-center">Aksi</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y">
+              {roles.map((role) => (
+                <tr key={role.id}>
+                  <td className="p-4 font-mono text-xs font-bold text-slate-900">{role.code}</td>
+                  <td className="p-4 font-semibold text-slate-900">{role.name}</td>
+                  <td className="p-4 text-xs">{role.description || "-"}</td>
+                  <td className="p-4 text-xs">{role.isSystem ? "System" : "Customizable"}</td>
+                  <td className="p-4 text-center">
+                    <div className="flex justify-center gap-2">
+                      <button type="button" onClick={() => handleOpenRoleModal(role)} disabled={role.isSystem} aria-label={`Edit ${role.code}`} className="rounded p-1.5 text-slate-600 hover:bg-slate-100 hover:text-blue-600 disabled:opacity-30">
+                        <Edit2 size={16} />
+                      </button>
+                      <button type="button" onClick={() => handleDeleteRole(role)} disabled={role.isSystem} aria-label={`Delete ${role.code}`} className="rounded p-1.5 text-slate-600 hover:bg-slate-100 hover:text-red-600 disabled:opacity-30">
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
       {/* MODAL 1: FIELD FORM */}
       {isFieldModalOpen && (
         <div className="fixed inset-0 bg-slate-900/50 z-50 flex items-center justify-center p-4">
@@ -475,15 +573,14 @@ export default function SaaMasterFieldsPage() {
                   <label className="block text-xs font-bold text-slate-700 mb-1">
                     SECTION
                   </label>
-                  <select
+                  <input
+                    type="text"
                     value={section}
                     onChange={(e) => setSection(e.target.value)}
                     className="w-full border rounded-lg p-2 text-sm bg-white"
-                  >
-                    <option value="GENERAL">Section 1: Request By</option>
-                    <option value="ACTION">Section 2: Access Requested</option>
-                    <option value="DETAIL">Section 3: Access Details</option>
-                  </select>
+                    placeholder="Nama section"
+                    required
+                  />
                 </div>
               </div>
 
@@ -564,10 +661,9 @@ export default function SaaMasterFieldsPage() {
                   onChange={(e) => setStepRole(e.target.value)}
                   className="w-full border rounded-lg p-2 text-sm bg-white font-mono"
                 >
-                  <option value="HOD">HOD (Head of Department)</option>
-                  <option value="FINANCE_LEADER">FINANCE_LEADER (Finance Leader)</option>
-                  <option value="HOTEL_MANAGER">HOTEL_MANAGER (Hotel Manager)</option>
-                  <option value="IT_VERIFICATION">IT_VERIFICATION (IT Dept / Admin)</option>
+                  {roles.filter((role) => !role.isSystem).map((role) => (
+                    <option key={role.id} value={role.code}>{role.code} ({role.name})</option>
+                  ))}
                 </select>
               </div>
 
@@ -621,6 +717,56 @@ export default function SaaMasterFieldsPage() {
                   className="px-4 py-2 bg-cyan-600 text-white rounded-lg text-sm font-semibold shadow hover:bg-cyan-700"
                 >
                   Simpan Master Approver
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {isRoleModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
+          <div className="w-full max-w-lg space-y-5 rounded-xl bg-white p-6 shadow-xl">
+            <h2 className="border-b pb-3 text-lg font-bold text-slate-900">
+              {editingId ? "Edit Role" : "Tambah Role Code"}
+            </h2>
+            <form onSubmit={handleSubmitRole} className="space-y-4">
+              <label className="block text-xs font-bold text-slate-700">
+                ROLE CODE
+                <input
+                  value={roleCode}
+                  onChange={(event) => setRoleCode(event.target.value.toUpperCase().replace(/[^A-Z0-9_]/g, "_"))}
+                  disabled={Boolean(editingId)}
+                  placeholder="Contoh: PROCUREMENT_APPROVER"
+                  className="mt-1 w-full border p-2 font-mono text-sm disabled:bg-slate-100"
+                  required
+                />
+              </label>
+              <label className="block text-xs font-bold text-slate-700">
+                NAMA ROLE
+                <input
+                  value={roleName}
+                  onChange={(event) => setRoleName(event.target.value)}
+                  placeholder="Nama role yang tampil"
+                  className="mt-1 w-full border p-2 text-sm"
+                  required
+                />
+              </label>
+              <label className="block text-xs font-bold text-slate-700">
+                DESKRIPSI
+                <textarea
+                  value={roleDescription}
+                  onChange={(event) => setRoleDescription(event.target.value)}
+                  rows={2}
+                  className="mt-1 w-full border p-2 text-sm"
+                />
+              </label>
+              <div className="flex justify-end gap-2 border-t pt-4">
+                <button type="button" onClick={() => setIsRoleModalOpen(false)} className="border px-4 py-2 text-sm text-slate-600 hover:bg-slate-100">
+                  Batal
+                </button>
+                <button type="submit" className="bg-slate-900 px-4 py-2 text-sm font-semibold text-cyan-300 hover:bg-slate-800">
+                  Simpan Role
                 </button>
               </div>
             </form>

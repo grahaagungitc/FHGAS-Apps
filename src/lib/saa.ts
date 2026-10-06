@@ -10,17 +10,16 @@ export class SaaRequestError extends Error {
 interface SubmitSaaRequestInput {
   userId: string;
   formConfigId: string;
-  targetDepartmentId: string;
-  requesterName: string;
-  actionType: string;
   formData: Record<string, unknown>;
-  reason: string;
+  targetDepartmentId?: string;
+  requesterName?: string;
+  actionType?: string;
+  reason?: string;
 }
 
 export async function submitSaaRequest(input: SubmitSaaRequestInput) {
-  const [requester, targetDepartment, formConfig] = await Promise.all([
+  const [requester, formConfig] = await Promise.all([
     db.user.findUnique({ where: { id: input.userId } }),
-    db.department.findUnique({ where: { id: input.targetDepartmentId } }),
     db.saaFormConfig.findUnique({
       where: { id: input.formConfigId },
       include: {
@@ -34,57 +33,108 @@ export async function submitSaaRequest(input: SubmitSaaRequestInput) {
   ]);
 
   if (!requester) throw new SaaRequestError("Akun pemohon tidak ditemukan.", 401);
-  if (!input.requesterName.trim()) throw new SaaRequestError("Nama pemohon wajib diisi.");
-  if (!targetDepartment) throw new SaaRequestError("Departemen target tidak ditemukan.");
   if (!formConfig?.isActive) throw new SaaRequestError("Form SAA tidak aktif atau tidak ditemukan.");
   if (formConfig.approvalSteps.length === 0) {
     throw new SaaRequestError("Alur approval belum dikonfigurasi untuk form ini.");
   }
-  if (!input.actionType.trim()) {
-    throw new SaaRequestError("Field actionType belum dipilih.");
-  }
-  if (!input.reason.trim()) throw new SaaRequestError("Alasan pengajuan wajib diisi.");
 
   for (const configuredField of formConfig.fields) {
     const fieldValue = input.formData[configuredField.field.fieldKey];
-    const isRequiredCheckbox = configuredField.field.fieldType === "CHECKBOX";
+    const fieldType = configuredField.fieldType ?? configuredField.field.fieldType;
+    const isRequired = configuredField.isRequired ?? configuredField.field.isRequired;
+    const isRequiredCheckbox = fieldType === "CHECKBOX";
+    const resolvedValue =
+      configuredField.source === "REQUESTER_EMAIL"
+        ? requester.email
+        : fieldValue;
     if (
-      configuredField.field.isRequired &&
+      isRequired &&
       (isRequiredCheckbox
-        ? fieldValue !== true
-        : fieldValue === undefined || fieldValue === null || fieldValue === "")
+        ? resolvedValue !== true
+        : resolvedValue === undefined || resolvedValue === null || resolvedValue === "" ||
+          (typeof resolvedValue === "string" && !resolvedValue.trim()))
     ) {
-      throw new SaaRequestError(`Field '${configuredField.field.label}' wajib diisi.`);
+      throw new SaaRequestError(`Field '${configuredField.label ?? configuredField.field.label}' wajib diisi.`);
+    }
+  }
+
+  const departmentField = formConfig.fields.find((field) => field.source === "DEPARTMENT");
+  const configuredDepartmentId = departmentField
+    ? input.formData[departmentField.field.fieldKey]
+    : undefined;
+  const targetDepartmentId =
+    (typeof configuredDepartmentId === "string" && configuredDepartmentId) ||
+    input.targetDepartmentId ||
+    requester.departmentId ||
+    "";
+  const targetDepartment = targetDepartmentId
+    ? await db.department.findUnique({ where: { id: targetDepartmentId } })
+    : null;
+  if (!targetDepartment) {
+    throw new SaaRequestError("Pilih departemen pada form atau minta Admin mengatur binding Department.");
+  }
+
+  const requesterNameField = formConfig.fields.find((field) => field.source === "REQUESTER_NAME");
+  const configuredName = requesterNameField
+    ? input.formData[requesterNameField.field.fieldKey]
+    : undefined;
+  const requesterName =
+    (typeof configuredName === "string" && configuredName.trim()) ||
+    input.requesterName?.trim() ||
+    requester.name;
+  if (!requesterName.trim()) throw new SaaRequestError("Nama pemohon wajib diisi.");
+
+  const reasonField = formConfig.fields.find((field) => field.source === "REASON");
+  const configuredReason = reasonField ? input.formData[reasonField.field.fieldKey] : undefined;
+  const reason =
+    (typeof configuredReason === "string" && configuredReason.trim()) ||
+    input.reason?.trim() ||
+    "";
+
+  const actionType = formConfig.fields
+    .filter((field) => field.source === "REQUEST_TYPE")
+    .flatMap((field) => {
+      const value = input.formData[field.field.fieldKey];
+      const fieldType = field.fieldType ?? field.field.fieldType;
+      if (fieldType === "CHECKBOX") return value === true ? [field.label ?? field.field.label] : [];
+      if (typeof value === "string" && value.trim()) return [value.trim()];
+      if (typeof value === "number") return [String(value)];
+      return [];
+    })
+    .join(", ") || input.actionType?.trim() || formConfig.name;
+
+  const accessDetails = { ...input.formData };
+  for (const configuredField of formConfig.fields) {
+    switch (configuredField.source) {
+      case "REQUESTER_NAME":
+        accessDetails[configuredField.field.fieldKey] = requesterName;
+        break;
+      case "REQUESTER_EMAIL":
+        accessDetails[configuredField.field.fieldKey] = requester.email;
+        break;
+      case "DEPARTMENT":
+        accessDetails[configuredField.field.fieldKey] = targetDepartment.id;
+        break;
+      case "REASON":
+        accessDetails[configuredField.field.fieldKey] = reason;
+        break;
     }
   }
 
   const assignedSteps = [];
   for (const formStep of formConfig.approvalSteps) {
-    const role = formStep.approvalStep.role;
-    let approver = null;
-
-    if (role === "HOD") {
-      approver = await db.user.findFirst({
-        where: {
-          departmentId: targetDepartment.id,
-          isDeptHead: true,
-          id: { not: requester.id },
-        },
-      });
-    } else if (role === "FINANCE_LEADER") {
-      approver = await db.user.findFirst({ where: { isFinanceLeader: true } });
-    } else if (role === "HOTEL_MANAGER") {
-      approver = await db.user.findFirst({ where: { isHotelManager: true } });
-    } else if (role === "IT_VERIFICATION") {
-      approver = await db.user.findFirst({ where: { isIT: true } });
-    } else if (role === "FO_LEADER") {
-      approver = await db.user.findFirst({ where: { isFOLeader: true } });
-    } else {
-      throw new SaaRequestError(`Role approval '${role}' belum didukung.`);
-    }
+    const role = formStep.role ?? formStep.approvalStep.role;
+    const stepLabel = formStep.label ?? formStep.approvalStep.label;
+    const approver = await db.user.findFirst({
+      where: {
+        id: { not: requester.id },
+        ...(role === "HOD" ? { departmentId: targetDepartment.id } : {}),
+        userRoles: { some: { SystemRole: { is: { code: role } } } },
+      },
+    });
 
     if (!approver) {
-      throw new SaaRequestError(`Belum ada approver aktif untuk role ${role}.`, 409);
+      throw new SaaRequestError(`Belum ada approver aktif untuk role ${stepLabel} (${role}).`, 409);
     }
 
     assignedSteps.push({
@@ -100,14 +150,14 @@ export async function submitSaaRequest(input: SubmitSaaRequestInput) {
       data: {
         userId: requester.id,
         formConfigId: formConfig.id,
-        name: input.requesterName.trim(),
+        name: requesterName.trim(),
         email: requester.email,
         position: requester.position ?? "",
         department: targetDepartment.name,
         formType: formConfig.code,
-        actionType: input.actionType,
-        accessDetails: input.formData as Prisma.InputJsonValue,
-        reason: input.reason.trim(),
+        actionType,
+        accessDetails: accessDetails as Prisma.InputJsonValue,
+        reason,
         currentStep: formConfig.approvalSteps[0].step,
         approvalTasks: { create: assignedSteps },
       },

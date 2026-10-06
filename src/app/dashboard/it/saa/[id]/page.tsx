@@ -33,7 +33,18 @@ type SaaRequestDetail = {
     createdAt: string;
     approver: { name: string };
   }[];
-  formConfig: { name: string } | null;
+  formConfig: {
+    name: string;
+    sections: string[];
+    fields: {
+      fieldKey: string;
+      label: string;
+      fieldType: string;
+      source?: string | null;
+      section?: string | null;
+      order: number;
+    }[];
+  } | null;
 };
 
 export default function SaaRequestDetailPage() {
@@ -84,9 +95,40 @@ export default function SaaRequestDetailPage() {
   }
 
   const details = request.accessDetails ?? {};
+  const configuredFields = [...(request.formConfig?.fields ?? [])].sort(
+    (left, right) => left.order - right.order
+  );
+  const fieldSectionNames = [...new Set(
+    configuredFields.map((field) => field.section?.trim() || "Access Details")
+  )];
+  const sectionTitles = [
+    ...request.formConfig?.sections ?? [],
+    ...fieldSectionNames.filter((title) => !request.formConfig?.sections.includes(title)),
+  ];
+  const sections = sectionTitles.map((title) => [
+    title,
+    configuredFields.filter((field) => (field.section?.trim() || "Access Details") === title),
+  ] as const);
+  const configuredKeys = new Set(configuredFields.map((field) => field.fieldKey));
+  const otherDetails = Object.entries(details).filter(([key]) => !configuredKeys.has(key));
   const activeTask = request.approvalTasks.find(
     (task) => task.status === "PENDING" && task.stepOrder === request.currentStep
   );
+
+  const getConfiguredValue = (field: (typeof configuredFields)[number]) => {
+    if (field.source === "REQUESTER_NAME") return request.name;
+    if (field.source === "REQUESTER_EMAIL") return request.email;
+    if (field.source === "DEPARTMENT") return request.department;
+    if (field.source === "REASON") return request.reason;
+    return details[field.fieldKey];
+  };
+
+  const formatValue = (value: unknown) => {
+    if (typeof value === "boolean") return value ? "Ya" : "Tidak";
+    if (Array.isArray(value)) return value.join(", ");
+    if (value && typeof value === "object") return JSON.stringify(value);
+    return value === null || value === undefined || value === "" ? "-" : String(value);
+  };
 
   return (
     <div className="mx-auto max-w-5xl space-y-6 p-6">
@@ -108,25 +150,35 @@ export default function SaaRequestDetailPage() {
 
       {error && <p role="alert" className="border border-rose-300 bg-rose-50 p-3 text-sm text-rose-800">{error}</p>}
 
-      <section className="grid gap-6 md:grid-cols-2">
-        <div className="space-y-3">
-          <h2 className="text-sm font-black uppercase">Pemohon</h2>
-          <p className="text-sm">{request.name} · {request.email}</p>
-          <p className="text-sm text-slate-600">{request.position || "-"} · {request.department}</p>
-          <h2 className="pt-3 text-sm font-black uppercase">Alasan</h2>
-          <p className="whitespace-pre-wrap text-sm text-slate-700">{request.reason}</p>
-        </div>
-        <div className="space-y-3">
-          <h2 className="text-sm font-black uppercase">Detail Akses</h2>
-          <dl className="divide-y divide-slate-200 border-y border-slate-200">
-            {Object.entries(details).map(([key, value]) => (
-              <div key={key} className="grid grid-cols-[minmax(8rem,1fr)_2fr] gap-3 py-2 text-sm">
-                <dt className="font-semibold text-slate-600">{key}</dt>
-                <dd className="break-words text-slate-900">{String(value)}</dd>
-              </div>
-            ))}
-          </dl>
-        </div>
+      <section className="space-y-5">
+        {sections.map(([title, fields]) => (
+          <div key={title} className="space-y-3 border-y border-slate-300 py-4">
+            <h2 className="text-sm font-black uppercase">{title}</h2>
+            <dl className="divide-y divide-slate-200 border-y border-slate-200">
+              {fields.map((field) => (
+                <div key={field.fieldKey} className="grid grid-cols-[minmax(8rem,1fr)_2fr] gap-3 py-2 text-sm">
+                  <dt className="font-semibold text-slate-600">{field.label}</dt>
+                  <dd className="break-words whitespace-pre-wrap text-slate-900">
+                    {formatValue(getConfiguredValue(field))}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+        ))}
+        {otherDetails.length > 0 && (
+          <div className="space-y-3 border-y border-slate-300 py-4">
+            <h2 className="text-sm font-black uppercase">Detail Lainnya</h2>
+            <dl className="divide-y divide-slate-200 border-y border-slate-200">
+              {otherDetails.map(([key, value]) => (
+                <div key={key} className="grid grid-cols-[minmax(8rem,1fr)_2fr] gap-3 py-2 text-sm">
+                  <dt className="font-semibold text-slate-600">{key}</dt>
+                  <dd className="break-words whitespace-pre-wrap text-slate-900">{formatValue(value)}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+        )}
       </section>
 
       <section className="space-y-3 border-t border-slate-300 pt-5">

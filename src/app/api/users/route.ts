@@ -17,25 +17,25 @@ export async function GET() {
     });
 
     const formattedUsers = users.map((u) => {
-      const roles: string[] = [];
+      const roles = new Set<string>();
 
       // Ambil dari SystemRole (ADMIN / STAFF)
       if (u.userRoles && u.userRoles.length > 0) {
         u.userRoles.forEach((ur) => {
           if (ur.SystemRole?.code) {
-            roles.push(ur.SystemRole.code);
+            roles.add(ur.SystemRole.code);
           }
         });
       }
 
       // Ambil dari Boolean Flags dan cocokkan labelnya dengan UI Multi-Role Approval
-      if (u.isDeptHead) roles.push("HOD");
-      if (u.isFinanceLeader) roles.push("FINANCE");
-      if (u.isHotelManager) roles.push("GM/HM");
-      if (u.isFOLeader) roles.push("FO_LEADER");
-      if (u.isIT) roles.push("IT");
+      if (u.isDeptHead) roles.add("HOD");
+      if (u.isFinanceLeader) roles.add("FINANCE_LEADER");
+      if (u.isHotelManager) roles.add("HOTEL_MANAGER");
+      if (u.isFOLeader) roles.add("FO_LEADER");
+      if (u.isIT) roles.add("IT_VERIFICATION");
 
-      if (roles.length === 0) roles.push("STAFF");
+      if (roles.size === 0) roles.add("STAFF");
 
       return {
         id: u.id,
@@ -44,8 +44,8 @@ export async function GET() {
         position: u.position || "-",
         departmentId: u.departmentId,
         departmentName: u.department?.name || "",
-        approvalRoles: roles, // Menyelaraskan field dengan komponen UI Approval Mapping
-        roles,
+        approvalRoles: [...roles],
+        roles: [...roles],
       };
     });
 
@@ -72,35 +72,23 @@ export async function POST(request: Request) {
       );
     }
 
-    const rolesArray: string[] = Array.isArray(roles) ? roles : [];
+    const rolesArray: string[] = Array.isArray(roles)
+      ? [...new Set(roles.filter((role: unknown): role is string => typeof role === "string"))]
+      : ["STAFF"];
+    if (rolesArray.length === 0) rolesArray.push("STAFF");
 
     // Boolean Approval Flags (Mendukung alias dari UI: FINANCE / FINANCE_LEADER dan GM/HM / HOTEL_MANAGER)
     const isDeptHead = rolesArray.includes("HOD");
     const isFinanceLeader = rolesArray.includes("FINANCE") || rolesArray.includes("FINANCE_LEADER");
     const isHotelManager = rolesArray.includes("GM/HM") || rolesArray.includes("HOTEL_MANAGER");
     const isFOLeader = rolesArray.includes("FO_LEADER");
-    const isIT = rolesArray.includes("IT");
+    const isIT = rolesArray.some((code) => ["IT", "IT TEAM", "IT_VERIFICATION"].includes(code));
 
-    // System Roles (ADMIN / STAFF)
-    const systemRoleCodes = rolesArray.filter((r) =>
-      ["ADMIN", "STAFF"].includes(r)
-    );
-    if (systemRoleCodes.length === 0) systemRoleCodes.push("STAFF");
-
-    // Pastikan SystemRole tersedia di database
-    const systemRoleIds: string[] = [];
-    for (const code of systemRoleCodes) {
-      const sysRole = await prisma.systemRole.upsert({
-        where: { code },
-        update: {},
-        create: {
-          code,
-          name: code === "ADMIN" ? "Administrator" : "Staff",
-          isSystem: true,
-        },
-      });
-      systemRoleIds.push(sysRole.id);
+    const roleRecords = await prisma.systemRole.findMany({ where: { code: { in: rolesArray } } });
+    if (roleRecords.length !== rolesArray.length) {
+      return NextResponse.json({ message: "Pilih role yang tersedia di Setup." }, { status: 400 });
     }
+    const systemRoleIds = roleRecords.map((role) => role.id);
 
     // Buat User baru
     const newUser = await prisma.user.create({

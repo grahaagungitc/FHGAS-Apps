@@ -16,7 +16,6 @@ import {
   FileSignature,
   Activity,
   SlidersHorizontal,
-  Database,
   type LucideIcon,
 } from "lucide-react";
 
@@ -123,18 +122,6 @@ export default function Sidebar({ user, signOutAction }: SidebarProps) {
           >
             <LayoutDashboard className="w-4 h-4" />
             <span>Dashboard</span>
-          </Link>
-
-          <Link
-            href="/dashboard/it/saa/create"
-            className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg font-bold transition-all border-2 ${
-              pathname === "/dashboard/it/saa/create"
-                ? "bg-slate-900 text-cyan-400 border-slate-900"
-                : "text-slate-700 hover:bg-slate-100 border-transparent hover:border-slate-900"
-            }`}
-          >
-            <FileSignature className="w-4 h-4" />
-            <span>New SAA Request</span>
           </Link>
 
           {/* Department Parent Dropdown */}
@@ -288,18 +275,6 @@ export default function Sidebar({ user, signOutAction }: SidebarProps) {
                   <span>SAA Configuration</span>
                 </Link>
 
-                {/* SAA Master Fields Menu Item Baru */}
-                <Link
-                  href="/dashboard/setup/saa-fields"
-                  className={`flex items-center gap-2 px-2 py-1.5 rounded font-semibold transition-all ${
-                    pathname === "/dashboard/setup/saa-fields"
-                      ? "bg-slate-900 text-cyan-400 font-bold"
-                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
-                  }`}
-                >
-                  <Database className="w-3.5 h-3.5" />
-                  <span>SAA Master Fields</span>
-                </Link>
               </div>
             )}
           </div>

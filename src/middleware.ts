@@ -35,7 +35,7 @@ export async function middleware(req: NextRequest) {
   }
 
   const isSaaSetupPath =
-    /^\/api\/setup\/saa-(config|fields|steps)(\/|$)/.test(pathname);
+    /^\/api\/setup\/saa-(config|fields|steps|roles)(\/|$)/.test(pathname);
   const isPublicSaaConfigRead =
     req.method === "GET" && pathname === "/api/setup/saa-config";
   const isAdminPath =
@@ -50,6 +50,10 @@ export async function middleware(req: NextRequest) {
       return NextResponse.json({ message: "Forbidden" }, { status: 403 });
     }
     return NextResponse.redirect(new URL("/dashboard", req.url));
+  }
+
+  if (pathname === "/dashboard/setup/saa-fields") {
+    return NextResponse.redirect(new URL("/dashboard/setup/saa-config?tab=master", req.url));
   }
 
   if (

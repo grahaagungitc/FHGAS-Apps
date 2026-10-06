@@ -1,5 +1,28 @@
 import { NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
+
+async function ensureFormSection(
+  tx: Prisma.TransactionClient,
+  formConfigId: string,
+  section: string
+) {
+  const config = await tx.saaFormConfig.findUnique({
+    where: { id: formConfigId },
+    select: { sections: true, fields: { select: { section: true } } },
+  });
+  if (!config) return;
+
+  const sections = Array.isArray(config.sections)
+    ? config.sections.filter((value): value is string => typeof value === "string")
+    : [...new Set(config.fields.map((field) => field.section))];
+  if (!sections.includes(section)) {
+    await tx.saaFormConfig.update({
+      where: { id: formConfigId },
+      data: { sections: [...sections, section] },
+    });
+  }
+}
 
 // GET: Ambil daftar Master Fields & Master Steps
 export async function GET() {
@@ -49,23 +72,29 @@ export async function POST(req: Request) {
       );
     }
 
-    const newField = await db.saaField.create({
-      data: {
-        fieldKey,
-        label,
-        fieldType: fieldType || "TEXT",
-        section: section || "DETAIL",
-        options: options ? JSON.stringify(options) : null,
-        isRequired: Boolean(isRequired),
-        assignedForms: {
-          create: (assignedFormIds || []).map((formId: string, idx: number) => ({
-            formConfigId: formId,
-            order: idx + 1,
-            section: section || "DETAIL",
-          })),
+    const sectionName = typeof section === "string" && section.trim() ? section.trim() : "Access Details";
+    const formIds = Array.isArray(assignedFormIds) ? assignedFormIds : [];
+    const newField = await db.$transaction(async (tx) => {
+      const field = await tx.saaField.create({
+        data: {
+          fieldKey,
+          label,
+          fieldType: fieldType || "TEXT",
+          section: sectionName,
+          options: options ? JSON.stringify(options) : null,
+          isRequired: Boolean(isRequired),
+          assignedForms: {
+            create: formIds.map((formId: string, idx: number) => ({
+              formConfigId: formId,
+              order: idx + 1,
+              section: sectionName,
+            })),
+          },
         },
-      },
-      include: { assignedForms: true },
+        include: { assignedForms: true },
+      });
+      for (const formId of formIds) await ensureFormSection(tx, formId, sectionName);
+      return field;
     });
 
     return NextResponse.json(newField, { status: 201 });
@@ -92,9 +121,33 @@ export async function PUT(req: Request) {
     }
 
     const updatedField = await db.$transaction(async (tx) => {
+      const existingAssignments = await tx.saaFormField.findMany({
+        where: { fieldId: id },
+        select: {
+          formConfigId: true,
+          order: true,
+          section: true,
+          source: true,
+          label: true,
+          fieldType: true,
+          isRequired: true,
+          options: true,
+        },
+      });
+      const assignmentsByFormId = new Map(
+        existingAssignments.map((assignment) => [assignment.formConfigId, assignment])
+      );
+      const formIds = Array.isArray(assignedFormIds) ? assignedFormIds : [];
+      const sectionByFormId = new Map(
+        formIds.map((formId: string) => [
+          formId,
+          assignmentsByFormId.get(formId)?.section || section || "Access Details",
+        ])
+      );
+
       await tx.saaFormField.deleteMany({ where: { fieldId: id } });
 
-      return await tx.saaField.update({
+      const updated = await tx.saaField.update({
         where: { id },
         data: {
           fieldKey,
@@ -104,15 +157,24 @@ export async function PUT(req: Request) {
           options: options ? JSON.stringify(options) : null,
           isRequired: Boolean(isRequired),
           assignedForms: {
-            create: (assignedFormIds || []).map((formId: string, idx: number) => ({
+            create: formIds.map((formId: string, idx: number) => ({
               formConfigId: formId,
-              order: idx + 1,
-              section: section || "DETAIL",
+              order: assignmentsByFormId.get(formId)?.order ?? idx + 1,
+              section: sectionByFormId.get(formId) || "Access Details",
+              source: assignmentsByFormId.get(formId)?.source ?? null,
+              label: assignmentsByFormId.get(formId)?.label ?? null,
+              fieldType: assignmentsByFormId.get(formId)?.fieldType ?? null,
+              isRequired: assignmentsByFormId.get(formId)?.isRequired ?? null,
+              options: assignmentsByFormId.get(formId)?.options ?? undefined,
             })),
           },
         },
         include: { assignedForms: true },
       });
+      for (const formId of formIds) {
+        await ensureFormSection(tx, formId, sectionByFormId.get(formId) || "Access Details");
+      }
+      return updated;
     });
 
     return NextResponse.json(updatedField);

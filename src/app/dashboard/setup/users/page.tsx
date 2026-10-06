@@ -3,24 +3,14 @@
 import { useState, useEffect } from "react";
 import { UserPlus, Pencil, Trash2, ShieldCheck, Loader2, X } from "lucide-react";
 
-export type UserRole =
-  | "STAFF"
-  | "HOD"
-  | "FINANCE_LEADER"
-  | "HOTEL_MANAGER"
-  | "FO_LEADER"
-  | "IT"
-  | "ADMIN";
+export type UserRole = string;
 
-const AVAILABLE_ROLES: { value: UserRole; label: string }[] = [
-  { value: "STAFF", label: "STAFF (Pemohon)" },
-  { value: "HOD", label: "HEAD OF DEPT (HOD)" },
-  { value: "FINANCE_LEADER", label: "FINANCE LEADER" },
-  { value: "HOTEL_MANAGER", label: "HOTEL MANAGER" },
-  { value: "FO_LEADER", label: "FRONT OFFICE LEADER" },
-  { value: "IT", label: "IT TEAM" },
-  { value: "ADMIN", label: "ADMINISTRATOR" },
-];
+interface RoleOption {
+  id: string;
+  code: string;
+  name: string;
+  isSystem: boolean;
+}
 
 interface Department {
   id: string;
@@ -42,6 +32,7 @@ interface User {
 export default function UserManagementPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
+  const [availableRoles, setAvailableRoles] = useState<RoleOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -65,10 +56,13 @@ export default function UserManagementPage() {
   const fetchInitialData = async () => {
     setLoading(true);
     try {
-      const [resUsers, resDepts] = await Promise.all([
+      const [resUsers, resDepts, resRoles] = await Promise.all([
         fetch("/api/users"),
         fetch("/api/departments"),
+        fetch("/api/setup/saa-roles"),
       ]);
+
+      if (resRoles.ok) setAvailableRoles(await resRoles.json());
 
       let fetchedDepts: Department[] = [];
       if (resDepts.ok) {
@@ -178,10 +172,10 @@ export default function UserManagementPage() {
   };
 
   // Toggle Checkbox Multiple Roles
-  const handleRoleToggle = (role: UserRole) => {
+  const handleRoleToggle = (role: string) => {
     setFormData((prev) => {
       const currentRoles = prev.roles;
-      let updatedRoles: UserRole[];
+      let updatedRoles: string[];
 
       if (currentRoles.includes(role)) {
         if (currentRoles.length === 1) return prev;
@@ -272,71 +266,17 @@ export default function UserManagementPage() {
     return (
       <div className="flex flex-wrap gap-1">
         {roles.map((role) => {
-          switch (role) {
-            case "HOD":
-              return (
-                <span
-                  key={role}
-                  className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-100 text-emerald-800 border border-emerald-400"
-                >
-                  HOD
-                </span>
-              );
-            case "FINANCE_LEADER":
-              return (
-                <span
-                  key={role}
-                  className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-100 text-amber-800 border border-amber-400"
-                >
-                  FINANCE
-                </span>
-              );
-            case "HOTEL_MANAGER":
-              return (
-                <span
-                  key={role}
-                  className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-purple-100 text-purple-800 border border-purple-400"
-                >
-                  GM/HM
-                </span>
-              );
-            case "FO_LEADER":
-              return (
-                <span
-                  key={role}
-                  className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-blue-100 text-blue-800 border border-blue-400"
-                >
-                  FO LEADER
-                </span>
-              );
-            case "IT":
-              return (
-                <span
-                  key={role}
-                  className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-cyan-100 text-cyan-800 border border-cyan-400"
-                >
-                  IT
-                </span>
-              );
-            case "ADMIN":
-              return (
-                <span
-                  key={role}
-                  className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-rose-100 text-rose-800 border border-rose-400"
-                >
-                  ADMIN
-                </span>
-              );
-            default:
-              return (
-                <span
-                  key={role}
-                  className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-slate-100 text-slate-600 border border-slate-300"
-                >
-                  STAFF
-                </span>
-              );
-          }
+          const roleOption = availableRoles.find((option) => option.code === role);
+          const badgeClass = role === "ADMIN"
+            ? "bg-rose-100 text-rose-800 border-rose-400"
+            : role === "HOD"
+              ? "bg-emerald-100 text-emerald-800 border-emerald-400"
+              : "bg-cyan-100 text-cyan-800 border-cyan-300";
+          return (
+            <span key={role} className={`rounded border px-2 py-0.5 text-[10px] font-mono font-bold ${badgeClass}`}>
+              {roleOption?.name || role}
+            </span>
+          );
         })}
       </div>
     );
@@ -584,11 +524,11 @@ export default function UserManagementPage() {
                   APPROVAL ROLES (BISA PILIH LEBIH DARI 1) *
                 </label>
                 <div className="grid grid-cols-2 gap-2 p-3 bg-slate-50 border-2 border-slate-900 rounded-lg">
-                  {AVAILABLE_ROLES.map((role) => {
-                    const isChecked = formData.roles.includes(role.value);
+                  {availableRoles.map((role) => {
+                    const isChecked = formData.roles.includes(role.code);
                     return (
                       <label
-                        key={role.value}
+                        key={role.code}
                         className={`flex items-center gap-2 p-2 rounded border-2 cursor-pointer text-xs font-mono font-bold transition-all ${
                           isChecked
                             ? "bg-cyan-100 border-slate-900 text-slate-900"
@@ -598,10 +538,10 @@ export default function UserManagementPage() {
                         <input
                           type="checkbox"
                           checked={isChecked}
-                          onChange={() => handleRoleToggle(role.value)}
+                          onChange={() => handleRoleToggle(role.code)}
                           className="w-4 h-4 rounded border-slate-900 text-cyan-600 focus:ring-cyan-400"
                         />
-                        <span>{role.label}</span>
+                        <span>{role.name} ({role.code})</span>
                       </label>
                     );
                   })}
