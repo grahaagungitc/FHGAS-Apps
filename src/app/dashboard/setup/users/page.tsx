@@ -73,11 +73,9 @@ export default function UserManagementPage() {
       if (resUsers.ok) {
         const userData = await resUsers.json();
 
-        // Normalisasi data user agar departmentId selalu memakai ID/UUID valid
         const normalizedUsers = userData.map((u: any) => {
           let resolvedDeptId = u.departmentId || "";
 
-          // Jika departmentId kosong, cek properti u.department
           if (!resolvedDeptId && u.department) {
             if (typeof u.department === "object" && u.department.id) {
               resolvedDeptId = u.department.id;
@@ -88,7 +86,6 @@ export default function UserManagementPage() {
               if (matched) resolvedDeptId = matched.id;
             }
           } else if (resolvedDeptId) {
-            // Jika tersimpan nama string di departmentId, ubah ke UUID departemen
             const matchedByName = fetchedDepts.find(
               (d) => d.name === resolvedDeptId
             );
@@ -117,7 +114,6 @@ export default function UserManagementPage() {
     }
   };
 
-  // Open Modal Add (Otomatis memilih departemen pertama dari Department Management)
   const handleOpenAddModal = () => {
     setEditingUser(null);
     const defaultDeptId = departments.length > 0 ? departments[0].id : "";
@@ -132,11 +128,9 @@ export default function UserManagementPage() {
     setIsModalOpen(true);
   };
 
-  // Open Modal Edit
   const handleOpenEditModal = (user: User) => {
     setEditingUser(user);
 
-    // Cari UUID departemen yang paling presisi dari daftar Department Management
     let activeDeptId = user.departmentId || "";
 
     if (!activeDeptId && user.department) {
@@ -156,7 +150,6 @@ export default function UserManagementPage() {
       if (matchedByName) activeDeptId = matchedByName.id;
     }
 
-    // Jika masih tidak ditemukan, beri fallback ke departemen pertama jika ada
     if (!activeDeptId && departments.length > 0) {
       activeDeptId = departments[0].id;
     }
@@ -171,7 +164,6 @@ export default function UserManagementPage() {
     setIsModalOpen(true);
   };
 
-  // Toggle Checkbox Multiple Roles
   const handleRoleToggle = (role: string) => {
     setFormData((prev) => {
       const currentRoles = prev.roles;
@@ -188,7 +180,6 @@ export default function UserManagementPage() {
     });
   };
 
-  // Submit Form (Create / Update)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
@@ -261,19 +252,18 @@ export default function UserManagementPage() {
     }
   };
 
-  // Helper Render Multiple Badges
   const renderRoleBadges = (roles: UserRole[]) => {
     return (
       <div className="flex flex-wrap gap-1">
         {roles.map((role) => {
           const roleOption = availableRoles.find((option) => option.code === role);
           const badgeClass = role === "ADMIN"
-            ? "bg-rose-100 text-rose-800 border-rose-400"
+            ? "bg-rose-50 text-rose-600 border-rose-100"
             : role === "HOD"
-              ? "bg-emerald-100 text-emerald-800 border-emerald-400"
-              : "bg-cyan-100 text-cyan-800 border-cyan-300";
+              ? "bg-emerald-50 text-emerald-600 border-emerald-100"
+              : "bg-indigo-50 text-[#5C61F4] border-indigo-100";
           return (
-            <span key={role} className={`rounded border px-2 py-0.5 text-[10px] font-mono font-bold ${badgeClass}`}>
+            <span key={role} className={`rounded-full border px-2.5 py-0.5 text-[10px] font-bold ${badgeClass}`}>
               {roleOption?.name || role}
             </span>
           );
@@ -285,12 +275,12 @@ export default function UserManagementPage() {
   return (
     <div className="space-y-6 max-w-6xl mx-auto pb-12">
       {/* Header Banner */}
-      <div className="bg-white border-2 border-slate-900 p-6 rounded-xl shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white border border-slate-100 p-6 rounded-3xl shadow-soft">
         <div>
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight uppercase flex items-center gap-2">
-            USER MANAGEMENT & APPROVAL MAPPING
+          <h1 className="text-xl font-extrabold text-slate-800 tracking-tight">
+            User Management & Approval Mapping
           </h1>
-          <p className="text-xs font-mono text-slate-600 mt-1">
+          <p className="text-xs font-medium text-slate-400 mt-0.5">
             Atur Departemen, Tambah User, dan tetapkan Multi-Role Approval untuk
             alur persetujuan SAA.
           </p>
@@ -298,34 +288,34 @@ export default function UserManagementPage() {
 
         <button
           onClick={handleOpenAddModal}
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-cyan-400 text-slate-900 font-mono font-black text-xs rounded-lg border-2 border-slate-900 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:bg-cyan-300 transition-all whitespace-nowrap"
+          className="inline-flex items-center justify-center gap-2 px-5 py-3 bg-[#5C61F4] hover:bg-indigo-600 text-white font-bold text-xs rounded-2xl shadow-soft transition-all active:scale-[0.99] whitespace-nowrap"
         >
           <UserPlus className="w-4 h-4" />
-          <span>ADD NEW USER</span>
+          <span>Tambah User Baru</span>
         </button>
       </div>
 
       {/* Main Table Card */}
-      <div className="bg-white border-2 border-slate-900 rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] overflow-hidden">
+      <div className="bg-white border border-slate-100 rounded-3xl shadow-soft overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-slate-900 text-white font-mono text-xs uppercase border-b-2 border-slate-900">
-                <th className="p-4">USER / EMAIL</th>
+              <tr className="bg-slate-50 text-slate-500 text-xs font-bold uppercase tracking-wider border-b border-slate-100">
+                <th className="p-4 pl-6">USER / EMAIL</th>
                 <th className="p-4">POSITION</th>
                 <th className="p-4">ASSIGNED DEPARTMENT</th>
                 <th className="p-4">APPROVAL ROLES</th>
-                <th className="p-4 text-center">ACTIONS</th>
+                <th className="p-4 text-center pr-6">AKSI</th>
               </tr>
             </thead>
-            <tbody className="divide-y-2 divide-slate-100 text-xs font-medium">
+            <tbody className="divide-y divide-slate-100 text-xs font-medium text-slate-700">
               {loading ? (
                 <tr>
                   <td
                     colSpan={5}
-                    className="p-8 text-center text-slate-500 font-mono"
+                    className="p-12 text-center text-slate-400 font-medium"
                   >
-                    <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-cyan-500" />
+                    <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-[#5C61F4]" />
                     <span>Memuat data pengguna...</span>
                   </td>
                 </tr>
@@ -333,14 +323,13 @@ export default function UserManagementPage() {
                 <tr>
                   <td
                     colSpan={5}
-                    className="p-8 text-center text-slate-500 font-mono"
+                    className="p-12 text-center text-slate-400 font-medium"
                   >
-                    Belum ada data user. Klik ADD NEW USER untuk menambah.
+                    Belum ada data user. Klik Tambah User Baru untuk menambah.
                   </td>
                 </tr>
               ) : (
                 users.map((user) => {
-                  // Match ID dari Department Management
                   const currentDeptVal = user.departmentId || "";
                   const matchedDept = departments.find(
                     (d) => d.id === currentDeptVal || d.name === currentDeptVal
@@ -350,17 +339,17 @@ export default function UserManagementPage() {
                   return (
                     <tr
                       key={user.id}
-                      className="hover:bg-slate-50 transition-colors"
+                      className="hover:bg-slate-50/60 transition"
                     >
-                      <td className="p-4">
-                        <div className="font-bold text-slate-900">
+                      <td className="p-4 pl-6">
+                        <div className="font-bold text-slate-800">
                           {user.name}
                         </div>
-                        <div className="text-[11px] font-mono text-slate-500">
+                        <div className="text-[11px] font-medium text-slate-400">
                           {user.email}
                         </div>
                       </td>
-                      <td className="p-4 font-mono text-slate-700">
+                      <td className="p-4 font-semibold text-slate-700">
                         {user.position || "-"}
                       </td>
                       <td className="p-4">
@@ -369,10 +358,9 @@ export default function UserManagementPage() {
                           onChange={(e) =>
                             handleDepartmentChange(user.id, e.target.value)
                           }
-                          className="px-3 py-1.5 border-2 border-slate-900 rounded-lg text-xs font-bold bg-white focus:outline-none focus:ring-2 focus:ring-cyan-400"
+                          className="px-3.5 py-2 border border-slate-200 rounded-2xl text-xs font-bold bg-white text-slate-800 focus:outline-none focus:border-indigo-500 transition-all cursor-pointer"
                         >
                           <option value="">-- UNASSIGNED --</option>
-                          {/* Hanya merender opsi dari Department Management */}
                           {departments.map((dept) => (
                             <option key={dept.id} value={dept.id}>
                               {dept.name}
@@ -381,23 +369,23 @@ export default function UserManagementPage() {
                         </select>
                       </td>
                       <td className="p-4">{renderRoleBadges(user.roles)}</td>
-                      <td className="p-4 text-center">
-                        <div className="flex justify-center items-center gap-2">
+                      <td className="p-4 text-center pr-6">
+                        <div className="flex justify-center items-center gap-1.5">
                           <button
                             onClick={() => handleOpenEditModal(user)}
-                            className="p-1.5 bg-slate-100 border border-slate-900 rounded hover:bg-cyan-100 text-slate-800"
+                            className="p-1.5 text-slate-500 hover:text-[#5C61F4] rounded-xl hover:bg-slate-100 transition"
                             title="Edit User"
                           >
-                            <Pencil className="w-3.5 h-3.5" />
+                            <Pencil className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() =>
                               handleDeleteUser(user.id, user.name)
                             }
-                            className="p-1.5 bg-red-100 border border-slate-900 rounded hover:bg-red-200 text-red-700"
+                            className="p-1.5 text-slate-500 hover:text-rose-600 rounded-xl hover:bg-slate-100 transition"
                             title="Delete User"
                           >
-                            <Trash2 className="w-3.5 h-3.5" />
+                            <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
                       </td>
@@ -411,12 +399,12 @@ export default function UserManagementPage() {
       </div>
 
       {/* Info Card */}
-      <div className="bg-cyan-50 border-2 border-cyan-400 p-4 rounded-xl text-xs space-y-2">
-        <div className="font-bold font-mono text-cyan-900 flex items-center gap-1.5 uppercase">
-          <ShieldCheck className="w-4 h-4 text-cyan-700" />
-          MULTI-ROLE APPROVAL MAPPING:
+      <div className="bg-indigo-50/60 border border-indigo-100 p-5 rounded-3xl text-xs space-y-2">
+        <div className="font-extrabold text-[#5C61F4] flex items-center gap-2 uppercase tracking-wide">
+          <ShieldCheck className="w-4 h-4 text-[#5C61F4]" />
+          Multi-Role Approval Mapping:
         </div>
-        <p className="text-slate-700 font-mono">
+        <p className="text-slate-600 font-medium leading-relaxed">
           Satu akun dapat memegang beberapa peran sekaligus (contoh: seseorang
           bisa menjabat sebagai <strong>HOD</strong> sekaligus{" "}
           <strong>FINANCE LEADER</strong> atau <strong>IT</strong> dan{" "}
@@ -426,16 +414,16 @@ export default function UserManagementPage() {
 
       {/* MODAL FORM ADD / EDIT USER */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
-          <div className="bg-white border-2 border-slate-900 rounded-xl shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
+          <div className="bg-white border border-slate-100 rounded-3xl shadow-soft-lg w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-150">
             {/* Modal Header */}
-            <div className="bg-slate-900 text-white p-4 flex justify-between items-center border-b-2 border-slate-900">
-              <h3 className="text-sm font-black uppercase font-mono">
-                {editingUser ? "EDIT USER" : "ADD NEW USER"}
+            <div className="bg-white p-6 flex justify-between items-center border-b border-slate-100">
+              <h3 className="text-base font-extrabold text-slate-800">
+                {editingUser ? "Edit User" : "Tambah User Baru"}
               </h3>
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="text-slate-400 hover:text-white"
+                className="text-slate-400 hover:text-slate-700"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -444,8 +432,8 @@ export default function UserManagementPage() {
             {/* Modal Body / Form */}
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
               <div>
-                <label className="block text-xs font-mono font-bold text-slate-700 mb-1">
-                  FULL NAME *
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                  NAMA LENGKAP *
                 </label>
                 <input
                   type="text"
@@ -455,12 +443,12 @@ export default function UserManagementPage() {
                     setFormData({ ...formData, name: e.target.value })
                   }
                   placeholder="Contoh: Achmad R. Alvan"
-                  className="w-full px-3 py-2 border-2 border-slate-900 rounded-lg text-xs font-medium focus:outline-none focus:ring-2 focus:ring-cyan-400"
+                  className="w-full px-3.5 py-3 border border-slate-200 rounded-2xl text-sm font-medium text-slate-800 focus:outline-none focus:border-indigo-500 transition-all"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-mono font-bold text-slate-700 mb-1">
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">
                   EMAIL ADDRESS *
                 </label>
                 <input
@@ -471,12 +459,12 @@ export default function UserManagementPage() {
                     setFormData({ ...formData, email: e.target.value })
                   }
                   placeholder="grahaagungitc@favehotels.com"
-                  className="w-full px-3 py-2 border-2 border-slate-900 rounded-lg text-xs font-medium focus:outline-none focus:ring-2 focus:ring-cyan-400"
+                  className="w-full px-3.5 py-3 border border-slate-200 rounded-2xl text-sm font-medium text-slate-800 focus:outline-none focus:border-indigo-500 transition-all"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-mono font-bold text-slate-700 mb-1">
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">
                   POSITION / JABATAN *
                 </label>
                 <input
@@ -487,13 +475,13 @@ export default function UserManagementPage() {
                     setFormData({ ...formData, position: e.target.value })
                   }
                   placeholder="Contoh: IT Coordinator"
-                  className="w-full px-3 py-2 border-2 border-slate-900 rounded-lg text-xs font-medium focus:outline-none focus:ring-2 focus:ring-cyan-400"
+                  className="w-full px-3.5 py-3 border border-slate-200 rounded-2xl text-sm font-medium text-slate-800 focus:outline-none focus:border-indigo-500 transition-all"
                 />
               </div>
 
-              {/* Department Dropdown (Hanya Mengambil dari Department Management) */}
+              {/* Department Dropdown */}
               <div>
-                <label className="block text-xs font-mono font-bold text-slate-700 mb-1">
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">
                   DEPARTMENT *
                 </label>
                 <select
@@ -507,7 +495,7 @@ export default function UserManagementPage() {
                   onChange={(e) =>
                     setFormData({ ...formData, departmentId: e.target.value })
                   }
-                  className="w-full px-3 py-2 border-2 border-slate-900 rounded-lg text-xs font-bold bg-white focus:outline-none focus:ring-2 focus:ring-cyan-400"
+                  className="w-full px-3.5 py-3 border border-slate-200 rounded-2xl text-sm font-bold bg-white text-slate-800 focus:outline-none focus:border-indigo-500 transition-all cursor-pointer"
                 >
                   <option value="">-- UNASSIGNED --</option>
                   {departments.map((dept) => (
@@ -520,26 +508,26 @@ export default function UserManagementPage() {
 
               {/* Multi-Role Checkboxes */}
               <div>
-                <label className="block text-xs font-mono font-bold text-slate-700 mb-2">
+                <label className="block text-xs font-bold text-slate-700 mb-2">
                   APPROVAL ROLES (BISA PILIH LEBIH DARI 1) *
                 </label>
-                <div className="grid grid-cols-2 gap-2 p-3 bg-slate-50 border-2 border-slate-900 rounded-lg">
+                <div className="grid grid-cols-2 gap-2 p-3 bg-slate-50 border border-slate-100 rounded-2xl">
                   {availableRoles.map((role) => {
                     const isChecked = formData.roles.includes(role.code);
                     return (
                       <label
                         key={role.code}
-                        className={`flex items-center gap-2 p-2 rounded border-2 cursor-pointer text-xs font-mono font-bold transition-all ${
+                        className={`flex items-center gap-2 p-2.5 rounded-xl border cursor-pointer text-xs font-bold transition-all ${
                           isChecked
-                            ? "bg-cyan-100 border-slate-900 text-slate-900"
-                            : "bg-white border-slate-200 text-slate-600 hover:border-slate-400"
+                            ? "bg-indigo-50 border-indigo-200 text-[#5C61F4]"
+                            : "bg-white border-slate-200 text-slate-600 hover:border-slate-300"
                         }`}
                       >
                         <input
                           type="checkbox"
                           checked={isChecked}
                           onChange={() => handleRoleToggle(role.code)}
-                          className="w-4 h-4 rounded border-slate-900 text-cyan-600 focus:ring-cyan-400"
+                          className="w-4 h-4 rounded text-indigo-600 accent-indigo-600"
                         />
                         <span>{role.name} ({role.code})</span>
                       </label>
@@ -549,21 +537,21 @@ export default function UserManagementPage() {
               </div>
 
               {/* Modal Actions */}
-              <div className="flex justify-end gap-2 pt-4 border-t border-slate-200">
+              <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 bg-slate-100 text-slate-700 text-xs font-mono font-bold rounded-lg border-2 border-slate-900 hover:bg-slate-200"
+                  className="px-5 py-2.5 bg-white text-slate-700 text-xs font-bold rounded-2xl border border-slate-200 hover:bg-slate-50 transition"
                 >
-                  CANCEL
+                  Batal
                 </button>
                 <button
                   type="submit"
                   disabled={saving}
-                  className="inline-flex items-center gap-1.5 px-5 py-2 bg-slate-900 text-cyan-400 text-xs font-mono font-black rounded-lg border-2 border-slate-900 shadow-[2px_2px_0px_0px_rgba(0,243,255,1)] hover:bg-slate-800 disabled:opacity-50"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#5C61F4] hover:bg-indigo-600 text-white text-xs font-bold rounded-2xl shadow-soft transition disabled:opacity-50"
                 >
-                  {saving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                  <span>{editingUser ? "UPDATE USER" : "SAVE USER"}</span>
+                  {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+                  <span>{editingUser ? "Simpan Perubahan" : "Simpan User"}</span>
                 </button>
               </div>
             </form>

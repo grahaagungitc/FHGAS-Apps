@@ -10,10 +10,10 @@ export default function ComingSoon({
   description = "Fitur ini sedang dalam tahap pengerjaan dan akan segera hadir.",
 }: ComingSoonProps) {
   return (
-    <div className="flex flex-col items-center justify-center min-h-[60vh] p-6 text-center">
-      <div className="bg-primary/10 p-4 rounded-full mb-4">
+    <div className="flex flex-col items-center justify-center min-h-[50vh] p-8 text-center bg-white border border-slate-100 rounded-3xl shadow-soft">
+      <div className="bg-indigo-50 p-5 rounded-full mb-4">
         <svg
-          className="w-12 h-12 text-primary animate-pulse"
+          className="w-10 h-10 text-[#5C61F4] animate-pulse"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -26,9 +26,9 @@ export default function ComingSoon({
           />
         </svg>
       </div>
-      <h1 className="text-2xl font-bold tracking-tight mb-2">{title}</h1>
-      <p className="text-muted-foreground max-w-md mb-6">{description}</p>
-      <div className="px-3 py-1 bg-muted rounded-full text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+      <h1 className="text-2xl font-extrabold text-slate-800 tracking-tight mb-2">{title}</h1>
+      <p className="text-slate-500 font-medium max-w-md text-sm mb-6">{description}</p>
+      <div className="px-4 py-1.5 bg-indigo-50 text-[#5C61F4] rounded-full text-xs font-bold uppercase tracking-wider">
         Coming Soon
       </div>
     </div>

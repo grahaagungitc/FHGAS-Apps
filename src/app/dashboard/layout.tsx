@@ -20,7 +20,7 @@ export default async function DashboardLayout({
   };
 
   return (
-    <div className="flex min-h-screen bg-slate-100">
+    <div className="flex min-h-screen bg-[#F8FAFC]">
       <Sidebar
         user={{
           name: session.user?.name,

@@ -8,15 +8,31 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        brand: {
+          primary: "#5C61F4",
+          "primary-hover": "#4F46E5",
+          dark: "#1E1B4B",
+          purple: "#8B5CF6",
+          yellow: "#FFB800",
+          teal: "#2DD4BF",
+          pink: "#FB7185",
+          bg: "#F8FAFC",
+        },
         cyber: {
-          cyan: "#00f3ff",
-          pink: "#ff007f",
-          dark: "#0b0e14",
+          cyan: "#5C61F4",
+          pink: "#FB7185",
+          dark: "#1E1B4B",
         },
       },
       boxShadow: {
-        'cyber-cyan': '0 0 15px rgba(0, 243, 255, 0.4)',
-        'cyber-pink': '0 0 15px rgba(255, 0, 127, 0.4)',
+        'soft': '0 4px 20px -2px rgba(92, 97, 244, 0.08)',
+        'soft-lg': '0 10px 30px -4px rgba(92, 97, 244, 0.12)',
+        'cyber-cyan': '0 4px 14px rgba(92, 97, 244, 0.25)',
+        'cyber-pink': '0 4px 14px rgba(251, 113, 133, 0.25)',
+      },
+      borderRadius: {
+        '3xl': '1.5rem',
+        '4xl': '2rem',
       },
     },
   },

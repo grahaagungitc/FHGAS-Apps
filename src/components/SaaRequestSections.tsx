@@ -53,42 +53,42 @@ export default function SaaRequestSections(props: SaaRequestSectionsProps) {
   const sections = normalizedTitles.map((title) => ({ title, fields: groupedFields.get(title) || [] }));
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       {sections.map((section, index) => (
-          <section key={section.title} className="space-y-4 border-y-2 border-slate-900 bg-white px-5 py-5">
-            <h2 className="flex items-center gap-3 border-b border-slate-200 pb-3 text-sm font-black uppercase text-slate-900">
-              <span className="flex h-7 w-7 items-center justify-center border-2 border-slate-900 bg-cyan-300 text-xs">
-                {index + 1}
-              </span>
-              {section.title}
-            </h2>
+        <section key={section.title} className="space-y-5 bg-white border border-slate-100 rounded-3xl p-6 shadow-soft">
+          <h2 className="flex items-center gap-3 border-b border-slate-100 pb-4 text-sm font-extrabold uppercase text-slate-800 tracking-wide">
+            <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-indigo-50 text-[#5C61F4] font-bold text-xs">
+              {index + 1}
+            </span>
+            {section.title}
+          </h2>
 
-            <div className="grid gap-4 md:grid-cols-4">
-              {section.fields.map((field) => (
-                <div
-                  key={field.id}
-                  className={
-                    field.fieldType === "CHECKBOX"
-                      ? "md:col-span-1"
-                      : field.fieldType === "RADIO" ||
-                          field.fieldType === "TEXTAREA" ||
-                          field.source === "REASON"
-                        ? "md:col-span-4"
-                        : "md:col-span-2"
-                  }
-                >
-                  <SaaDynamicField
-                    field={field}
-                    value={props.values[field.fieldKey]}
-                    departments={props.departments}
-                    onChange={props.onFieldChange}
-                    readOnly={props.readOnly}
-                  />
-                </div>
-              ))}
-            </div>
-              </section>
-          ))}
+          <div className="grid gap-5 md:grid-cols-4">
+            {section.fields.map((field) => (
+              <div
+                key={field.id}
+                className={
+                  field.fieldType === "CHECKBOX"
+                    ? "md:col-span-1"
+                    : field.fieldType === "RADIO" ||
+                        field.fieldType === "TEXTAREA" ||
+                        field.source === "REASON"
+                      ? "md:col-span-4"
+                      : "md:col-span-2"
+                }
+              >
+                <SaaDynamicField
+                  field={field}
+                  value={props.values[field.fieldKey]}
+                  departments={props.departments}
+                  onChange={props.onFieldChange}
+                  readOnly={props.readOnly}
+                />
+              </div>
+            ))}
+          </div>
+        </section>
+      ))}
     </div>
   );
 }

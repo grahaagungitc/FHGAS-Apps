@@ -52,32 +52,32 @@ export default function NotificationBell() {
         aria-label={`Notifikasi${unreadCount ? `, ${unreadCount} belum dibaca` : ""}`}
         aria-expanded={open}
         onClick={() => setOpen((value) => !value)}
-        className="relative flex h-10 w-10 items-center justify-center border-2 border-slate-900 bg-white text-slate-900 hover:bg-cyan-50"
+        className="relative flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition-colors shadow-soft"
       >
         <Bell className="h-5 w-5" />
         {unreadCount > 0 && (
-          <span className="absolute -right-2 -top-2 min-w-5 rounded-full border border-slate-900 bg-rose-600 px-1 text-center text-[10px] font-black leading-5 text-white">
+          <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white shadow-sm ring-2 ring-white">
             {unreadCount > 99 ? "99+" : unreadCount}
           </span>
         )}
       </button>
 
       {open && (
-        <section className="absolute right-0 top-12 z-50 w-[min(24rem,calc(100vw-2rem))] border-2 border-slate-900 bg-white shadow-lg">
-          <header className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
-            <h2 className="text-sm font-black">Notifikasi</h2>
+        <section className="absolute right-0 top-12 z-50 w-[min(24rem,calc(100vw-2rem))] rounded-3xl border border-slate-100 bg-white shadow-soft-lg p-2">
+          <header className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
+            <h2 className="text-sm font-bold text-slate-800">Notifikasi</h2>
             <Link
               href="/dashboard/notifications"
               onClick={() => setOpen(false)}
-              className="text-xs font-bold text-cyan-800 underline"
+              className="text-xs font-semibold text-indigo-600 hover:underline"
             >
               Lihat semua
             </Link>
           </header>
           {items.length === 0 ? (
-            <p className="p-4 text-sm text-slate-500">Tidak ada notifikasi baru.</p>
+            <p className="p-4 text-xs font-medium text-slate-400 text-center">Tidak ada notifikasi baru.</p>
           ) : (
-            <ul className="max-h-80 divide-y divide-slate-200 overflow-y-auto">
+            <ul className="max-h-80 divide-y divide-slate-100 overflow-y-auto">
               {items.slice(0, 6).map((item) => (
                 <li key={item.id}>
                   <Link
@@ -86,10 +86,10 @@ export default function NotificationBell() {
                       setOpen(false);
                       void markAsRead(item.id);
                     }}
-                    className="block px-4 py-3 hover:bg-cyan-50"
+                    className="block p-3 rounded-2xl hover:bg-slate-50 transition-colors"
                   >
-                    <span className="block text-xs font-black text-slate-900">{item.title}</span>
-                    <span className="mt-1 block text-xs text-slate-600">{item.message}</span>
+                    <span className="block text-xs font-bold text-slate-800">{item.title}</span>
+                    <span className="mt-0.5 block text-xs text-slate-500 font-medium">{item.message}</span>
                     <time className="mt-1 block text-[10px] text-slate-400">
                       {new Date(item.createdAt).toLocaleString("id-ID")}
                     </time>

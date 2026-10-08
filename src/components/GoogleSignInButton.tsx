@@ -3,7 +3,11 @@
 import { useState } from "react";
 import { signIn } from "next-auth/react";
 
-export default function GoogleSignInButton() {
+interface GoogleSignInButtonProps {
+  label?: string;
+}
+
+export default function GoogleSignInButton({ label = "Google" }: GoogleSignInButtonProps) {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
 
@@ -26,7 +30,7 @@ export default function GoogleSignInButton() {
         type="button"
         onClick={handleSignIn}
         disabled={pending}
-        className="w-full flex items-center justify-center gap-3 py-3 px-4 bg-slate-900 hover:bg-black text-white font-bold rounded-lg border-2 border-cyber-cyan shadow-cyber-cyan transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60"
+        className="w-full flex items-center justify-center gap-3 py-3.5 px-4 bg-white hover:bg-slate-50 text-slate-700 font-semibold rounded-2xl border border-slate-200 shadow-sm transition-all hover:border-slate-300 active:scale-[0.99] disabled:opacity-60"
       >
         <svg className="w-5 h-5" viewBox="0 0 24 24" aria-hidden="true">
           <path
@@ -46,9 +50,9 @@ export default function GoogleSignInButton() {
             d="M12 23c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3 0-5.5-2.2-6.4-5.2L1.9 16C3.7 19.7 7.5 22.3 12 23z"
           />
         </svg>
-        <span>{pending ? "REDIRECTING..." : "SIGN IN WITH GOOGLE"}</span>
+        <span className="text-sm font-medium">{pending ? "Proses..." : label}</span>
       </button>
-      {error && <p role="alert" className="mt-3 text-left text-sm text-rose-700">{error}</p>}
+      {error && <p role="alert" className="mt-2 text-center text-xs text-rose-600 font-medium">{error}</p>}
     </>
   );
 }

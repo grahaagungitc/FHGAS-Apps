@@ -163,18 +163,18 @@ export default function SaaCreatePage() {
   };
 
   if (loading) {
-    return <p className="p-8 text-center text-sm font-bold text-slate-600">Memuat konfigurasi SAA...</p>;
+    return <p className="p-8 text-center text-sm font-bold text-slate-400">Memuat konfigurasi SAA...</p>;
   }
 
   if (submitted) {
     return (
-      <section className="mx-auto max-w-2xl space-y-4 border-y-2 border-emerald-800 bg-emerald-50 p-8 text-center">
-        <CheckCircle2 className="mx-auto h-12 w-12 text-emerald-700" />
-        <h1 className="text-xl font-black text-emerald-950">Pengajuan SAA terkirim</h1>
-        <p className="text-sm text-emerald-900">Approver pada tahap aktif sudah menerima notifikasi.</p>
-        <div className="flex flex-wrap justify-center gap-3">
-          <button onClick={() => setSubmitted(false)} className="border-2 border-slate-900 bg-white px-4 py-2 text-sm font-bold">Buat pengajuan lain</button>
-          <Link href="/dashboard/it/saa" className="border-2 border-slate-900 bg-slate-900 px-4 py-2 text-sm font-bold text-white">Lihat daftar SAA</Link>
+      <section className="mx-auto max-w-2xl space-y-5 bg-white border border-emerald-100 rounded-3xl p-8 text-center shadow-soft">
+        <CheckCircle2 className="mx-auto h-14 w-14 text-emerald-500" />
+        <h1 className="text-2xl font-extrabold text-slate-800">Pengajuan SAA Terkirim</h1>
+        <p className="text-sm font-medium text-slate-500">Approver pada tahap aktif sudah menerima notifikasi.</p>
+        <div className="flex flex-wrap justify-center gap-3 pt-2">
+          <button onClick={() => setSubmitted(false)} className="border border-slate-200 bg-white hover:bg-slate-50 px-5 py-2.5 text-xs font-bold rounded-2xl transition">Buat Pengajuan Lain</button>
+          <Link href="/dashboard/it/saa" className="bg-[#5C61F4] hover:bg-indigo-600 text-white px-5 py-2.5 text-xs font-bold rounded-2xl shadow-soft transition">Lihat Daftar SAA</Link>
         </div>
       </section>
     );
@@ -182,30 +182,32 @@ export default function SaaCreatePage() {
 
   return (
     <div className="mx-auto max-w-5xl space-y-6">
-      <header className="flex flex-wrap items-center gap-4 border-b-2 border-slate-900 pb-5">
-        <div className="flex h-12 w-12 items-center justify-center border-2 border-slate-900 bg-cyan-300">
-          <FileSignature className="h-6 w-6 text-slate-900" />
+      <header className="flex flex-wrap items-center gap-4 bg-white border border-slate-100 rounded-3xl p-6 shadow-soft">
+        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-50 text-[#5C61F4]">
+          <FileSignature className="h-6 w-6" />
         </div>
         <div>
-          <h1 className="text-xl font-black uppercase text-slate-900">
+          <h1 className="text-xl font-extrabold text-slate-800 tracking-tight">
             {selectedForm?.name || "System Access Authorization"}
           </h1>
-          <p className="mt-1 text-xs text-slate-600">Pilih tipe SAA; field dan approval mengikuti konfigurasi tipe tersebut.</p>
+          <p className="mt-0.5 text-xs font-medium text-slate-400">Pilih tipe SAA; field dan approval mengikuti konfigurasi tipe tersebut.</p>
         </div>
       </header>
 
-      {error && <p role="alert" className="border border-rose-300 bg-rose-50 p-3 text-sm text-rose-800">{error}</p>}
+      {error && <p role="alert" className="border border-rose-200 bg-rose-50 p-4 rounded-2xl text-xs font-bold text-rose-800">{error}</p>}
       {forms.length === 0 ? (
-        <p className="border-y border-slate-300 py-8 text-center text-sm text-slate-600">Belum ada tipe SAA aktif.</p>
+        <p className="bg-white border border-slate-100 rounded-3xl py-12 text-center text-sm font-medium text-slate-400 shadow-soft">Belum ada tipe SAA aktif.</p>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-6">
-          <label className="block max-w-xl text-xs font-bold text-slate-700">
-            TIPE FORM SAA <span className="text-red-600">*</span>
-            <select value={selectedFormId} onChange={(event) => handleFormChange(event.target.value)} required className="mt-1 w-full border-2 border-slate-900 bg-white p-2.5 text-sm">
-              {forms.map((form) => <option key={form.id} value={form.id}>[{form.code}] {form.name}</option>)}
-            </select>
-          </label>
-          {selectedForm?.description && <p className="border-l-4 border-cyan-600 bg-cyan-50 p-3 text-sm text-slate-700">{selectedForm.description}</p>}
+          <div className="bg-white border border-slate-100 rounded-3xl p-6 shadow-soft space-y-3">
+            <label className="block max-w-xl text-xs font-bold text-slate-700">
+              TIPE FORM SAA <span className="text-rose-500">*</span>
+              <select value={selectedFormId} onChange={(event) => handleFormChange(event.target.value)} required className="mt-2 w-full border border-slate-200 bg-white p-3 text-sm rounded-2xl font-semibold text-slate-800 focus:outline-none focus:border-indigo-500 transition-all cursor-pointer">
+                {forms.map((form) => <option key={form.id} value={form.id}>[{form.code}] {form.name}</option>)}
+              </select>
+            </label>
+            {selectedForm?.description && <p className="border-l-4 border-[#5C61F4] bg-indigo-50/50 p-3.5 rounded-r-2xl text-xs font-medium text-slate-600">{selectedForm.description}</p>}
+          </div>
 
           <SaaRequestSections
             departments={departments}
@@ -215,30 +217,30 @@ export default function SaaCreatePage() {
             onFieldChange={handleFieldChange}
           />
 
-          <section className="space-y-4 border-y-2 border-slate-900 bg-slate-950 px-5 py-5 text-white">
-            <h2 className="flex items-center gap-2 border-b border-slate-700 pb-3 text-sm font-black uppercase text-cyan-300">
-              <ShieldCheck className="h-5 w-5" /> Approval Workflow
+          <section className="space-y-4 bg-slate-900 rounded-3xl p-6 text-white shadow-soft">
+            <h2 className="flex items-center gap-2 border-b border-slate-800 pb-4 text-xs font-bold uppercase tracking-wider text-indigo-300">
+              <ShieldCheck className="h-5 w-5 text-[#5C61F4]" /> Approval Workflow
             </h2>
             <div className="flex flex-wrap items-stretch gap-3">
-              <div className="flex min-w-44 items-center gap-3 border border-slate-600 bg-slate-900 p-3">
-                <UserCheck className="h-4 w-4 text-cyan-300" />
+              <div className="flex min-w-44 items-center gap-3 border border-slate-800 bg-slate-800/60 p-3.5 rounded-2xl">
+                <UserCheck className="h-4 w-4 text-indigo-400" />
                 <div>
-                  <p className="text-[10px] font-bold uppercase text-cyan-300">Request By</p>
+                  <p className="text-[10px] font-bold uppercase text-indigo-300">Request By</p>
                   <p className="text-xs font-bold">{userProfile.name || "Pemohon"}</p>
                 </div>
               </div>
               {approvalSteps.map((step) => (
-                <div key={step.id} className="min-w-44 border border-slate-600 bg-slate-900 p-3">
-                  <p className="text-[10px] font-bold uppercase text-cyan-300">Step {step.step} · {step.role}</p>
+                <div key={step.id} className="min-w-44 border border-slate-800 bg-slate-800/60 p-3.5 rounded-2xl">
+                  <p className="text-[10px] font-bold uppercase text-indigo-300">Step {step.step} · {step.role}</p>
                   <p className="mt-1 text-xs font-bold">{step.label || step.role}</p>
                 </div>
               ))}
-              {approvalSteps.length === 0 && <p className="text-sm text-slate-300">Belum ada approval step di konfigurasi tipe SAA ini.</p>}
+              {approvalSteps.length === 0 && <p className="text-xs font-medium text-slate-400">Belum ada approval step di konfigurasi tipe SAA ini.</p>}
             </div>
           </section>
 
           <div className="flex justify-end">
-            <button type="submit" disabled={submitting || approvalSteps.length === 0} className="inline-flex items-center gap-2 border-2 border-slate-900 bg-cyan-300 px-5 py-3 text-sm font-black text-slate-900 disabled:cursor-not-allowed disabled:opacity-50">
+            <button type="submit" disabled={submitting || approvalSteps.length === 0} className="inline-flex items-center gap-2 bg-[#5C61F4] hover:bg-indigo-600 text-white px-6 py-3.5 rounded-2xl text-xs font-bold shadow-soft hover:shadow-indigo-200 transition-all disabled:cursor-not-allowed disabled:opacity-50 active:scale-[0.99]">
               <Send className="h-4 w-4" />
               {submitting ? "MENGIRIM..." : "SUBMIT PENGAJUAN SAA"}
             </button>

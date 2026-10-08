@@ -459,28 +459,32 @@ export default function SaaConfigPage() {
   };
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-            <Settings2 className="w-6 h-6 text-blue-600" />
-            SAA Form Configuration
-          </h1>
-          <p className="text-sm text-slate-500">
-            Kelola tipe SAA, field isian form, dan alur bertingkat approval.
-          </p>
+    <div className="space-y-6 max-w-6xl mx-auto pb-12">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white border border-slate-100 p-6 rounded-3xl shadow-soft">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center text-[#5C61F4] shrink-0">
+            <Settings2 className="w-6 h-6" />
+          </div>
+          <div>
+            <h1 className="text-xl font-extrabold text-slate-800 tracking-tight">
+              SAA Form Configuration
+            </h1>
+            <p className="text-xs font-medium text-slate-400 mt-0.5">
+              Kelola tipe SAA, field isian form, dan alur bertingkat approval.
+            </p>
+          </div>
         </div>
         {activeTab === "forms" && (
           <button
             onClick={handleOpenCreateModal}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg flex items-center gap-2 text-sm font-semibold shadow-sm transition"
+            className="inline-flex items-center justify-center gap-2 bg-[#5C61F4] hover:bg-indigo-600 text-white font-bold text-xs px-5 py-3 rounded-2xl shadow-soft transition-all active:scale-[0.99]"
           >
-            <Plus size={16} /> Tambah Tipe SAA
+            <Plus size={16} /> <span>Tambah Tipe SAA</span>
           </button>
         )}
       </div>
 
-      <div className="flex gap-5 overflow-x-auto border-b border-slate-200">
+      <div className="flex gap-2 overflow-x-auto bg-white border border-slate-100 p-2 rounded-2xl shadow-soft">
         {([
           ["forms", `Form Types (${configs.length})`],
           ["fields", "Fields"],
@@ -493,7 +497,7 @@ export default function SaaConfigPage() {
             key={tab}
             type="button"
             onClick={() => setActiveTab(tab)}
-            className={`shrink-0 border-b-2 pb-3 text-sm font-bold ${activeTab === tab ? "border-blue-600 text-blue-600" : "border-transparent text-slate-500 hover:text-slate-800"}`}
+            className={`shrink-0 px-4 py-2 text-xs font-bold rounded-xl transition-all ${activeTab === tab ? "bg-[#5C61F4] text-white shadow-soft" : "text-slate-500 hover:text-slate-800 hover:bg-slate-50"}`}
           >
             {label}
           </button>
@@ -508,34 +512,34 @@ export default function SaaConfigPage() {
         <section className="max-w-4xl space-y-5">
           <label className="block max-w-xl text-xs font-bold text-slate-700">
             TIPE FORM SAA
-            <select value={selectedConfigId} onChange={(event) => setSelectedConfigId(event.target.value)} className="mt-1 w-full border-2 border-slate-900 bg-white p-2.5 text-sm">
+            <select value={selectedConfigId} onChange={(event) => setSelectedConfigId(event.target.value)} className="mt-1.5 w-full border border-slate-200 bg-white p-3 text-sm rounded-2xl font-semibold text-slate-800 focus:outline-none focus:border-indigo-500 transition-all cursor-pointer">
               {configs.map((form) => <option key={form.id} value={form.id}>[{form.code}] {form.name}</option>)}
             </select>
           </label>
-          {!selectedForm ? <p className="text-sm text-slate-500">Belum ada tipe form SAA.</p> : (
-            <div className="space-y-4 border-y-2 border-slate-900 bg-white p-5">
-              <div className="flex items-center justify-between gap-3 border-b pb-3">
-                <h2 className="text-sm font-black uppercase text-slate-900">Sections · {selectedForm.name}</h2>
-                <button type="button" onClick={addManagedSection} className="inline-flex items-center gap-1 border-2 border-slate-900 bg-cyan-300 px-3 py-2 text-xs font-bold text-slate-900">
+          {!selectedForm ? <p className="text-xs font-medium text-slate-400">Belum ada tipe form SAA.</p> : (
+            <div className="space-y-4 bg-white border border-slate-100 rounded-3xl p-6 shadow-soft">
+              <div className="flex items-center justify-between gap-3 border-b border-slate-100 pb-4">
+                <h2 className="text-sm font-extrabold text-slate-800 uppercase tracking-wide">Sections · {selectedForm.name}</h2>
+                <button type="button" onClick={addManagedSection} className="inline-flex items-center gap-1.5 bg-indigo-50 text-[#5C61F4] hover:bg-indigo-100 px-4 py-2 text-xs font-bold rounded-xl transition">
                   <Plus size={14} /> Tambah Section
                 </button>
               </div>
               {sectionsDraft.map((section, index) => (
-                <div key={`${section}-${index}`} className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-2 border bg-slate-50 p-2">
+                <div key={`${section}-${index}`} className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl p-3">
                   <label className="min-w-0">
                     <span className="sr-only">Nama section {index + 1}</span>
-                    <input value={section} onChange={(event) => renameManagedSection(index, event.target.value)} className="w-full border bg-white p-2 text-sm" />
+                    <input value={section} onChange={(event) => renameManagedSection(index, event.target.value)} className="w-full border border-slate-200 bg-white p-2.5 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:border-indigo-500" />
                   </label>
-                  <span className="text-xs text-slate-500">{sectionFieldsDraft.filter((field) => field.section === section).length} field</span>
-                  <button type="button" onClick={() => moveManagedSection(index, -1)} disabled={index === 0} title="Naikkan section" className="border bg-white p-2 text-slate-600 disabled:opacity-30"><ArrowUp className="h-4 w-4" /></button>
-                  <div className="flex gap-1">
-                    <button type="button" onClick={() => moveManagedSection(index, 1)} disabled={index === sectionsDraft.length - 1} title="Turunkan section" className="border bg-white p-2 text-slate-600 disabled:opacity-30"><ArrowDown className="h-4 w-4" /></button>
-                    <button type="button" onClick={() => removeManagedSection(index)} title="Hapus section" className="border bg-white p-2 text-rose-700"><Trash2 className="h-4 w-4" /></button>
+                  <span className="text-xs font-medium text-slate-400">{sectionFieldsDraft.filter((field) => field.section === section).length} field</span>
+                  <button type="button" onClick={() => moveManagedSection(index, -1)} disabled={index === 0} title="Naikkan section" className="p-2 border border-slate-200 bg-white rounded-xl text-slate-600 disabled:opacity-30"><ArrowUp className="h-4 w-4" /></button>
+                  <div className="flex gap-1.5">
+                    <button type="button" onClick={() => moveManagedSection(index, 1)} disabled={index === sectionsDraft.length - 1} title="Turunkan section" className="p-2 border border-slate-200 bg-white rounded-xl text-slate-600 disabled:opacity-30"><ArrowDown className="h-4 w-4" /></button>
+                    <button type="button" onClick={() => removeManagedSection(index)} title="Hapus section" className="p-2 bg-rose-50 text-rose-600 rounded-xl hover:bg-rose-100"><Trash2 className="h-4 w-4" /></button>
                   </div>
                 </div>
               ))}
-              <div className="flex justify-end border-t pt-4">
-                <button type="button" onClick={handleSaveManagedSections} className="border-2 border-slate-900 bg-slate-900 px-4 py-2 text-sm font-bold text-cyan-300">Simpan Sections</button>
+              <div className="flex justify-end border-t border-slate-100 pt-4">
+                <button type="button" onClick={handleSaveManagedSections} className="bg-[#5C61F4] hover:bg-indigo-600 text-white px-5 py-2.5 rounded-2xl text-xs font-bold shadow-soft transition">Simpan Sections</button>
               </div>
             </div>
           )}
@@ -546,41 +550,41 @@ export default function SaaConfigPage() {
         <section className="max-w-4xl space-y-5">
           <label className="block max-w-xl text-xs font-bold text-slate-700">
             TIPE FORM SAA
-            <select value={selectedConfigId} onChange={(event) => setSelectedConfigId(event.target.value)} className="mt-1 w-full border-2 border-slate-900 bg-white p-2.5 text-sm">
+            <select value={selectedConfigId} onChange={(event) => setSelectedConfigId(event.target.value)} className="mt-1.5 w-full border border-slate-200 bg-white p-3 text-sm rounded-2xl font-semibold text-slate-800 focus:outline-none focus:border-indigo-500 transition-all cursor-pointer">
               {configs.map((form) => <option key={form.id} value={form.id}>[{form.code}] {form.name}</option>)}
             </select>
           </label>
-          {!selectedForm ? <p className="text-sm text-slate-500">Belum ada tipe form SAA.</p> : (
-            <div className="space-y-4 border-y-2 border-slate-900 bg-white p-5">
-              <div className="flex items-center justify-between gap-3 border-b pb-3">
-                <h2 className="text-sm font-black uppercase text-slate-900">Request Types · {selectedForm.name}</h2>
-                <button type="button" onClick={addRequestTypeField} className="inline-flex items-center gap-1 border-2 border-slate-900 bg-cyan-300 px-3 py-2 text-xs font-bold text-slate-900">
+          {!selectedForm ? <p className="text-xs font-medium text-slate-400">Belum ada tipe form SAA.</p> : (
+            <div className="space-y-4 bg-white border border-slate-100 rounded-3xl p-6 shadow-soft">
+              <div className="flex items-center justify-between gap-3 border-b border-slate-100 pb-4">
+                <h2 className="text-sm font-extrabold text-slate-800 uppercase tracking-wide">Request Types · {selectedForm.name}</h2>
+                <button type="button" onClick={addRequestTypeField} className="inline-flex items-center gap-1.5 bg-indigo-50 text-[#5C61F4] hover:bg-indigo-100 px-4 py-2 text-xs font-bold rounded-xl transition">
                   <Plus size={14} /> Tambah Request Type
                 </button>
               </div>
-              {requestTypeDrafts.length === 0 && <p className="text-sm text-slate-600">Belum ada Request Type untuk form ini.</p>}
+              {requestTypeDrafts.length === 0 && <p className="text-xs font-medium text-slate-400">Belum ada Request Type untuk form ini.</p>}
               {requestTypeDrafts.map((field, index) => (
-                <div key={field.fieldKey} className="grid gap-3 border bg-slate-50 p-3 md:grid-cols-2">
+                <div key={field.fieldKey} className="grid gap-3 border border-slate-100 bg-slate-50 p-4 rounded-2xl md:grid-cols-2">
                   <label className="text-xs font-bold text-slate-700">Label
-                    <input value={field.label} onChange={(event) => updateRequestTypeField(index, { label: event.target.value })} className="mt-1 w-full border bg-white p-2 text-sm" />
+                    <input value={field.label} onChange={(event) => updateRequestTypeField(index, { label: event.target.value })} className="mt-1 w-full border border-slate-200 rounded-xl bg-white p-2.5 text-xs font-medium text-slate-800" />
                   </label>
                   <label className="text-xs font-bold text-slate-700">Control
-                    <select value={field.fieldType} onChange={(event) => updateRequestTypeField(index, { fieldType: event.target.value })} className="mt-1 w-full border bg-white p-2 text-sm">
+                    <select value={field.fieldType} onChange={(event) => updateRequestTypeField(index, { fieldType: event.target.value })} className="mt-1 w-full border border-slate-200 rounded-xl bg-white p-2.5 text-xs font-medium text-slate-800">
                       <option value="SELECT">Dropdown</option>
                       <option value="RADIO">Radio</option>
                     </select>
                   </label>
                   <label className="text-xs font-bold text-slate-700 md:col-span-2">Choices (pisahkan dengan koma)
-                    <input value={(field.options || []).join(", ")} onChange={(event) => updateRequestTypeField(index, { options: event.target.value.split(",").map((option) => option.trim()).filter(Boolean) })} placeholder="Create Account, Modify Account" className="mt-1 w-full border bg-white p-2 text-sm" />
+                    <input value={(field.options || []).join(", ")} onChange={(event) => updateRequestTypeField(index, { options: event.target.value.split(",").map((option) => option.trim()).filter(Boolean) })} placeholder="Create Account, Modify Account" className="mt-1 w-full border border-slate-200 rounded-xl bg-white p-2.5 text-xs font-medium text-slate-800" />
                   </label>
-                  <label className="flex items-center gap-2 text-xs font-semibold text-slate-700">
-                    <input type="checkbox" checked={field.isRequired} onChange={(event) => updateRequestTypeField(index, { isRequired: event.target.checked })} /> Required
+                  <label className="flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer select-none">
+                    <input type="checkbox" checked={field.isRequired} onChange={(event) => updateRequestTypeField(index, { isRequired: event.target.checked })} className="h-4 w-4 rounded accent-indigo-600" /> Required
                   </label>
-                  <button type="button" onClick={() => setRequestTypeDrafts(requestTypeDrafts.filter((_, fieldIndex) => fieldIndex !== index))} className="justify-self-end text-xs font-bold text-rose-700">Hapus Request Type</button>
+                  <button type="button" onClick={() => setRequestTypeDrafts(requestTypeDrafts.filter((_, fieldIndex) => fieldIndex !== index))} className="justify-self-end text-xs font-bold text-rose-600">Hapus Request Type</button>
                 </div>
               ))}
-              <div className="flex justify-end border-t pt-4">
-                <button type="button" onClick={saveRequestTypes} disabled={requestTypeDrafts.length === 0} className="border-2 border-slate-900 bg-slate-900 px-4 py-2 text-sm font-bold text-cyan-300 disabled:opacity-40">Simpan Request Types</button>
+              <div className="flex justify-end border-t border-slate-100 pt-4">
+                <button type="button" onClick={saveRequestTypes} disabled={requestTypeDrafts.length === 0} className="bg-[#5C61F4] hover:bg-indigo-600 text-white px-5 py-2.5 rounded-2xl text-xs font-bold shadow-soft transition disabled:opacity-40">Simpan Request Types</button>
               </div>
             </div>
           )}
@@ -591,37 +595,37 @@ export default function SaaConfigPage() {
         <>
       {/* Grid List Tipe SAA */}
       {loading ? (
-        <p className="text-slate-500 text-sm">Memuat data konfigurasi...</p>
+        <p className="text-center py-12 text-xs font-bold text-slate-400">Memuat data konfigurasi...</p>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {configs.map((config) => (
             <div
               key={config.id}
-              className="border border-slate-200 rounded-xl p-5 bg-white shadow-sm hover:shadow-md transition space-y-4 flex flex-col justify-between"
+              className="border border-slate-100 rounded-3xl p-6 bg-white shadow-soft hover:shadow-md transition space-y-4 flex flex-col justify-between"
             >
               <div className="space-y-3">
                 <div className="flex justify-between items-start">
-                  <span className="text-xs font-bold px-2.5 py-1 bg-blue-100 text-blue-800 rounded-md">
+                  <span className="text-xs font-bold px-3 py-1 bg-indigo-50 text-[#5C61F4] rounded-full border border-indigo-100">
                     {config.code}
                   </span>
                   <div className="flex items-center gap-1">
                     {config.isActive ? (
-                      <CheckCircle size={18} className="text-green-500" />
+                      <CheckCircle size={18} className="text-emerald-500" />
                     ) : (
-                      <XCircle size={18} className="text-red-400" />
+                      <XCircle size={18} className="text-rose-400" />
                     )}
                   </div>
                 </div>
 
-                <h3 className="text-lg font-bold text-slate-900">
+                <h3 className="text-base font-extrabold text-slate-800">
                   {config.name}
                 </h3>
 
-                <p className="text-sm text-slate-600 leading-relaxed">
+                <p className="text-xs text-slate-500 font-medium leading-relaxed">
                   {config.description || "-"}
                 </p>
 
-                <div className="pt-2 border-t text-xs text-slate-500 space-y-1">
+                <div className="pt-3 border-t border-slate-100 text-xs text-slate-500 space-y-1">
                   <div>
                     <strong className="text-slate-700">Jumlah Field:</strong>{" "}
                     {config.fields?.length || 0} Kolom
@@ -634,16 +638,16 @@ export default function SaaConfigPage() {
               </div>
 
               {/* Action Buttons (Edit & Delete) */}
-              <div className="pt-3 border-t flex justify-end gap-2">
+              <div className="pt-3 border-t border-slate-100 flex justify-end gap-2">
                 <button
                   onClick={() => handleOpenEditModal(config)}
-                  className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md text-xs font-semibold flex items-center gap-1 transition"
+                  className="px-3.5 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-xl text-xs font-bold flex items-center gap-1.5 transition"
                 >
                   <Edit2 size={14} /> Edit
                 </button>
                 <button
                   onClick={() => handleDelete(config.id)}
-                  className="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-md text-xs font-semibold flex items-center gap-1 transition"
+                  className="px-3.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-xl text-xs font-bold flex items-center gap-1.5 transition"
                 >
                   <Trash2 size={14} /> Hapus
                 </button>
@@ -655,15 +659,15 @@ export default function SaaConfigPage() {
 
       {/* Modal Modal (Create & Edit) */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/50 z-50 flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto p-6 space-y-6 shadow-xl">
-            <div className="flex justify-between items-center border-b pb-3">
-              <h2 className="text-lg font-bold text-slate-900">
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-y-auto p-6 space-y-6 shadow-soft-lg border border-slate-100">
+            <div className="flex justify-between items-center border-b border-slate-100 pb-4">
+              <h2 className="text-base font-extrabold text-slate-800">
                 {editingId ? "Edit Konfigurasi SAA" : "Pengaturan Tipe SAA Baru"}
               </h2>
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600"
+                className="text-slate-400 hover:text-slate-700"
               >
                 ✕
               </button>
@@ -673,7 +677,7 @@ export default function SaaConfigPage() {
               {/* Form Info Utama */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  <label className="block text-xs font-bold text-slate-700 mb-1.5">
                     KODE TIPE (Unik)
                   </label>
                   <input
@@ -681,12 +685,12 @@ export default function SaaConfigPage() {
                     placeholder="Contoh: PMS"
                     value={code}
                     onChange={(e) => setCode(e.target.value.toUpperCase())}
-                    className="w-full border rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 font-mono"
+                    className="w-full border border-slate-200 rounded-2xl p-3 text-sm font-semibold text-slate-800 focus:outline-none focus:border-indigo-500 transition-all"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  <label className="block text-xs font-bold text-slate-700 mb-1.5">
                     NAMA FORM SAA
                   </label>
                   <input
@@ -694,19 +698,19 @@ export default function SaaConfigPage() {
                     placeholder="Contoh: PMS ACCESS"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="w-full border rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500"
+                    className="w-full border border-slate-200 rounded-2xl p-3 text-sm font-semibold text-slate-800 focus:outline-none focus:border-indigo-500 transition-all"
                     required
                   />
                 </div>
                 <div className="col-span-2">
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  <label className="block text-xs font-bold text-slate-700 mb-1.5">
                     DESKRIPSI
                   </label>
                   <textarea
                     placeholder="Contoh: Create / Modify / Suspend PMS User Account"
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
-                    className="w-full border rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500"
+                    className="w-full border border-slate-200 rounded-2xl p-3 text-sm font-medium text-slate-800 focus:outline-none focus:border-indigo-500 transition-all"
                     rows={2}
                   />
                 </div>
@@ -716,35 +720,35 @@ export default function SaaConfigPage() {
                     id="isActive"
                     checked={isActive}
                     onChange={(e) => setIsActive(e.target.checked)}
-                    className="rounded text-blue-600"
+                    className="rounded text-indigo-600 accent-indigo-600"
                   />
-                  <label htmlFor="isActive" className="text-xs font-medium text-slate-700">
+                  <label htmlFor="isActive" className="text-xs font-semibold text-slate-700">
                     Aktifkan Form Ini
                   </label>
                 </div>
               </div>
 
-              <div className="space-y-3 border-t pt-4">
+              <div className="space-y-3 border-t border-slate-100 pt-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="flex items-center gap-2 text-sm font-bold text-slate-800">
-                    <Layers3 className="h-4 w-4 text-blue-600" /> Sections
+                  <h3 className="flex items-center gap-2 text-sm font-extrabold text-slate-800">
+                    <Layers3 className="h-4 w-4 text-[#5C61F4]" /> Sections
                   </h3>
                   <button
                     type="button"
                     onClick={addSection}
-                    className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-200"
+                    className="inline-flex items-center gap-1 rounded-xl bg-indigo-50 px-3 py-1.5 text-xs font-bold text-[#5C61F4] hover:bg-indigo-100"
                   >
                     <Plus size={14} /> Tambah Section
                   </button>
                 </div>
                 {sections.map((section, index) => (
-                  <div key={`${section}-${index}`} className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-2 rounded border bg-slate-50 p-2">
+                  <div key={`${section}-${index}`} className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-2 rounded-2xl border border-slate-100 bg-slate-50 p-2.5">
                     <input
                       type="text"
                       value={section}
                       onChange={(event) => renameSection(index, event.target.value)}
                       aria-label={`Nama section ${index + 1}`}
-                      className="min-w-0 border bg-white p-2 text-sm"
+                      className="min-w-0 border border-slate-200 bg-white p-2 rounded-xl text-xs font-bold text-slate-800"
                       required
                     />
                     <button
@@ -753,7 +757,7 @@ export default function SaaConfigPage() {
                       aria-label="Naikkan section"
                       disabled={index === 0}
                       onClick={() => moveSection(index, -1)}
-                      className="border bg-white p-2 text-slate-600 disabled:opacity-30"
+                      className="border border-slate-200 bg-white p-2 rounded-xl text-slate-600 disabled:opacity-30"
                     >
                       <ArrowUp className="h-4 w-4" />
                     </button>
@@ -763,7 +767,7 @@ export default function SaaConfigPage() {
                       aria-label="Turunkan section"
                       disabled={index === sections.length - 1}
                       onClick={() => moveSection(index, 1)}
-                      className="border bg-white p-2 text-slate-600 disabled:opacity-30"
+                      className="border border-slate-200 bg-white p-2 rounded-xl text-slate-600 disabled:opacity-30"
                     >
                       <ArrowDown className="h-4 w-4" />
                     </button>
@@ -772,7 +776,7 @@ export default function SaaConfigPage() {
                       title="Hapus section"
                       aria-label="Hapus section"
                       onClick={() => removeSection(index)}
-                      className="border bg-white p-2 text-rose-700"
+                      className="p-2 bg-rose-50 text-rose-600 rounded-xl hover:bg-rose-100"
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
@@ -781,15 +785,15 @@ export default function SaaConfigPage() {
               </div>
 
               {/* Dynamic Field Builder */}
-              <div className="border-t pt-4 space-y-4">
+              <div className="border-t border-slate-100 pt-4 space-y-4">
                 <div className="flex justify-between items-center">
-                  <h3 className="font-bold text-sm text-slate-800">
+                  <h3 className="font-extrabold text-sm text-slate-800">
                     1. Field & Modification Checklist
                   </h3>
                   <button
                     type="button"
                     onClick={addField}
-                    className="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-md flex items-center gap-1 font-semibold"
+                    className="text-xs bg-indigo-50 text-[#5C61F4] hover:bg-indigo-100 px-3 py-1.5 rounded-xl flex items-center gap-1 font-bold"
                   >
                     <Plus size={14} /> Tambah Field
                   </button>
@@ -798,7 +802,7 @@ export default function SaaConfigPage() {
                 {fields.map((field, idx) => (
                   <div
                     key={idx}
-                    className="p-3 border rounded-lg bg-slate-50 grid grid-cols-12 gap-2 items-center"
+                    className="p-3 border border-slate-100 rounded-2xl bg-slate-50 grid grid-cols-12 gap-2 items-center"
                   >
                     {/* Key */}
                     <input
@@ -810,7 +814,7 @@ export default function SaaConfigPage() {
                         updated[idx].fieldKey = e.target.value;
                         setFields(updated);
                       }}
-                      className="col-span-2 border rounded p-1.5 text-xs bg-white font-mono"
+                      className="col-span-2 border border-slate-200 rounded-xl p-2 text-xs bg-white font-medium text-slate-800"
                       required
                     />
 
@@ -824,7 +828,7 @@ export default function SaaConfigPage() {
                         updated[idx].label = e.target.value;
                         setFields(updated);
                       }}
-                      className="col-span-2 border rounded p-1.5 text-xs bg-white"
+                      className="col-span-2 border border-slate-200 rounded-xl p-2 text-xs bg-white font-medium text-slate-800"
                       required
                     />
 
@@ -836,7 +840,7 @@ export default function SaaConfigPage() {
                         updated[idx].fieldType = e.target.value as any;
                         setFields(updated);
                       }}
-                      className="col-span-2 border rounded p-1.5 text-xs bg-white"
+                      className="col-span-2 border border-slate-200 rounded-xl p-2 text-xs bg-white font-medium text-slate-800"
                     >
                       <option value="TEXT">Input Text</option>
                       <option value="EMAIL">Input Email</option>
@@ -860,7 +864,7 @@ export default function SaaConfigPage() {
                         updated[idx].source = e.target.value;
                         setFields(updated);
                       }}
-                      className="col-span-2 border rounded p-1.5 text-xs bg-white font-semibold text-blue-700"
+                      className="col-span-2 border border-slate-200 rounded-xl p-2 text-xs bg-white font-semibold text-[#5C61F4]"
                     >
                       <option value="CUSTOM">Custom field</option>
                       <option value="REQUEST_TYPE">Request type</option>
@@ -878,7 +882,7 @@ export default function SaaConfigPage() {
                         updated[idx].section = e.target.value;
                         setFields(updated);
                       }}
-                      className="col-span-2 border rounded p-1.5 text-xs bg-white"
+                      className="col-span-2 border border-slate-200 rounded-xl p-2 text-xs bg-white font-medium text-slate-800"
                       required
                     >
                       <option value="">Pilih section</option>
@@ -897,18 +901,18 @@ export default function SaaConfigPage() {
                           updated[idx].order = Number(e.target.value);
                           setFields(updated);
                         }}
-                        className="w-12 border rounded p-1 text-xs text-center bg-white"
+                        className="w-12 border border-slate-200 rounded-xl p-1 text-xs text-center bg-white"
                         title="Urutan Tampilan"
                       />
                       <button
                         type="button"
                         onClick={() => removeField(idx)}
-                        className="text-red-500 hover:text-red-700 p-1"
+                        className="text-rose-500 hover:text-rose-700 p-1"
                       >
                         <Trash2 size={16} />
                       </button>
                     </div>
-                    <div className="col-span-12 flex flex-wrap items-center gap-3">
+                    <div className="col-span-12 flex flex-wrap items-center gap-3 pt-1">
                       {(field.fieldType === "SELECT" || field.fieldType === "RADIO") &&
                         field.source !== "DEPARTMENT" && (
                         <input
@@ -923,7 +927,7 @@ export default function SaaConfigPage() {
                             setFields(updated);
                           }}
                           placeholder="Choices, separated by commas"
-                          className="min-w-48 flex-1 border rounded p-1.5 text-xs bg-white"
+                          className="min-w-48 flex-1 border border-slate-200 rounded-xl p-2 text-xs bg-white"
                           required
                         />
                       )}
@@ -936,6 +940,7 @@ export default function SaaConfigPage() {
                             updated[idx].isRequired = e.target.checked;
                             setFields(updated);
                           }}
+                          className="rounded text-indigo-600 accent-indigo-600"
                         />
                         Required
                       </label>
@@ -945,15 +950,15 @@ export default function SaaConfigPage() {
               </div>
 
               {/* Dynamic Approval Workflow Builder */}
-              <div className="border-t pt-4 space-y-4">
+              <div className="border-t border-slate-100 pt-4 space-y-4">
                 <div className="flex justify-between items-center">
-                  <h3 className="font-bold text-sm text-slate-800">
+                  <h3 className="font-extrabold text-sm text-slate-800">
                     2. Urutan Approver (Approval Workflow)
                   </h3>
                   <button
                     type="button"
                     onClick={addApprovalStep}
-                    className="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-md flex items-center gap-1 font-semibold"
+                    className="text-xs bg-indigo-50 text-[#5C61F4] hover:bg-indigo-100 px-3 py-1.5 rounded-xl flex items-center gap-1 font-bold"
                   >
                     <Plus size={14} /> Tambah Step Approval
                   </button>
@@ -962,7 +967,7 @@ export default function SaaConfigPage() {
                 {approvalSteps.map((step, idx) => (
                   <div
                     key={idx}
-                    className="p-3 border rounded-lg bg-slate-50 flex items-center gap-3"
+                    className="p-3 border border-slate-100 rounded-2xl bg-slate-50 flex items-center gap-3"
                   >
                     <span className="text-xs font-bold w-12 text-slate-500">
                       Step {step.step}
@@ -974,7 +979,7 @@ export default function SaaConfigPage() {
                         updated[idx].role = e.target.value as any;
                         setApprovalSteps(updated);
                       }}
-                      className="border rounded p-1.5 text-xs bg-white flex-1"
+                      className="border border-slate-200 rounded-xl p-2 text-xs bg-white flex-1 font-medium text-slate-800"
                     >
                       {approvalRoles.map((role) => (
                         <option key={role.id} value={role.code}>{role.name} ({role.code})</option>
@@ -989,12 +994,12 @@ export default function SaaConfigPage() {
                         updated[idx].label = e.target.value;
                         setApprovalSteps(updated);
                       }}
-                      className="border rounded p-1.5 text-xs bg-white flex-1"
+                      className="border border-slate-200 rounded-xl p-2 text-xs bg-white flex-1 font-medium text-slate-800"
                     />
                     <button
                       type="button"
                       onClick={() => removeApprovalStep(idx)}
-                      className="text-red-500 hover:text-red-700 p-1"
+                      className="text-rose-500 hover:text-rose-700 p-1"
                     >
                       <Trash2 size={16} />
                     </button>
@@ -1003,17 +1008,17 @@ export default function SaaConfigPage() {
               </div>
 
               {/* Action Buttons */}
-              <div className="flex justify-end gap-2 border-t pt-4">
+              <div className="flex justify-end gap-3 border-t border-slate-100 pt-4">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 border rounded-lg text-sm text-slate-600 hover:bg-slate-100 font-medium"
+                  className="px-5 py-2.5 border border-slate-200 rounded-2xl text-xs font-bold text-slate-700 hover:bg-slate-50 transition"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold shadow"
+                  className="px-5 py-2.5 bg-[#5C61F4] hover:bg-indigo-600 text-white rounded-2xl text-xs font-bold shadow-soft transition"
                 >
                   {editingId ? "Simpan Perubahan" : "Simpan Konfigurasi"}
                 </button>

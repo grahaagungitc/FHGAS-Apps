@@ -49,41 +49,46 @@ export default function NotificationsPage() {
   };
 
   return (
-    <section className="mx-auto max-w-4xl space-y-5">
-      <header className="flex flex-wrap items-center justify-between gap-3 border-b-2 border-slate-900 pb-4">
-        <div className="flex items-center gap-3">
-          <Bell className="h-6 w-6" />
-          <h1 className="text-2xl font-black text-slate-900">Notifikasi</h1>
+    <section className="mx-auto max-w-4xl space-y-6">
+      <header className="flex flex-wrap items-center justify-between gap-4 bg-white border border-slate-100 p-6 rounded-3xl shadow-soft">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center text-[#5C61F4] shrink-0">
+            <Bell className="h-6 w-6" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-extrabold text-slate-800 tracking-tight">Notifikasi</h1>
+            <p className="text-xs font-medium text-slate-400 mt-0.5">Riwayat pemberitahuan dan aktivitas permohonan</p>
+          </div>
         </div>
-        <button onClick={markAllRead} className="inline-flex items-center gap-2 border-2 border-slate-900 bg-white px-3 py-2 text-xs font-bold hover:bg-cyan-50">
-          <CheckCheck className="h-4 w-4" /> Tandai semua dibaca
+        <button onClick={markAllRead} className="inline-flex items-center gap-2 border border-slate-200 bg-white hover:bg-slate-50 px-5 py-2.5 rounded-2xl text-xs font-bold text-slate-700 transition shadow-soft">
+          <CheckCheck className="h-4 w-4" /> Tandai Semua Dibaca
         </button>
       </header>
 
       {loading ? (
-        <p className="text-sm text-slate-600">Memuat notifikasi...</p>
+        <p className="text-center py-12 text-xs font-bold text-slate-400">Memuat notifikasi...</p>
       ) : items.length === 0 ? (
-        <p className="border-y border-slate-300 py-8 text-center text-sm text-slate-500">Belum ada notifikasi.</p>
+        <p className="bg-white border border-slate-100 rounded-3xl py-12 text-center text-sm font-medium text-slate-400 shadow-soft">Belum ada notifikasi.</p>
       ) : (
-        <ul className="divide-y divide-slate-300 border-y border-slate-300">
+        <div className="bg-white border border-slate-100 rounded-3xl shadow-soft divide-y divide-slate-100 overflow-hidden">
           {items.map((item) => (
-            <li key={item.id} className={`flex items-start justify-between gap-4 py-4 ${item.readAt ? "opacity-60" : ""}`}>
+            <div key={item.id} className={`flex items-start justify-between gap-4 p-5 hover:bg-slate-50/60 transition ${item.readAt ? "opacity-60" : ""}`}>
               <Link href={item.href} onClick={() => void markRead(item.id)} className="min-w-0 flex-1">
-                <span className="flex items-center gap-2 text-sm font-black text-slate-900">
-                  {!item.readAt && <span className="h-2 w-2 shrink-0 rounded-full bg-cyan-600" />}
+                <span className="flex items-center gap-2.5 text-sm font-extrabold text-slate-800">
+                  {!item.readAt && <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-[#5C61F4]" />}
                   {item.title}
                 </span>
-                <span className="mt-1 block text-sm text-slate-700">{item.message}</span>
-                <time className="mt-1 block text-xs text-slate-500">{new Date(item.createdAt).toLocaleString("id-ID")}</time>
+                <span className="mt-1 block text-xs text-slate-600 font-medium">{item.message}</span>
+                <time className="mt-1.5 block text-[10px] text-slate-400 font-medium">{new Date(item.createdAt).toLocaleString("id-ID")}</time>
               </Link>
               {!item.readAt && (
-                <button onClick={() => void markRead(item.id)} className="shrink-0 text-xs font-bold text-cyan-800 underline">
+                <button onClick={() => void markRead(item.id)} className="shrink-0 text-xs font-bold text-[#5C61F4] hover:underline">
                   Tandai dibaca
                 </button>
               )}
-            </li>
+            </div>
           ))}
-        </ul>
+        </div>
       )}
     </section>
   );

@@ -12,7 +12,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   ],
   session: { strategy: "jwt" },
   callbacks: {
-    async signIn({ user }) {
+    async signIn({ user, account }) {
       if (!user?.email) {
         return false;
       }
@@ -21,13 +21,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const existingUser = await db.user.findUnique({
           where: { email: user.email.trim().toLowerCase() },
         });
+
+        // Jika user sudah terdaftar di database, izinkan login
         if (existingUser) return true;
 
-        await requestUnregisteredAccess({
-          email: user.email,
-          name: user.name || user.email,
-        });
-        return "/login?error=AccessPending";
+        // Skema Baru: Email belum terdaftar TIDAK lagi otomatis diproses sebagai permohonan akses
+        // kecuali dialihkan dari alur Sign Up. Pada alur Login biasa, tampilkan pesan error bahwa email belum terdaftar.
+        return "/login?error=NotRegistered";
       } catch (error) {
         console.error("Database error during sign-in:", error);
         return false;

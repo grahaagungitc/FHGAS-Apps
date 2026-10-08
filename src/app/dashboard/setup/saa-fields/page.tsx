@@ -291,84 +291,110 @@ export default function SaaMasterFieldsPage({
   };
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-            <Database className="w-6 h-6 text-blue-600" />
-            Master Repository SAA
-          </h1>
-          <p className="text-sm text-slate-500">
-            Kelola Master Field, approver, dan role code SAA.
-          </p>
+    <div className="space-y-6 max-w-6xl mx-auto pb-12">
+      {showTabs && (
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white border border-slate-100 p-6 rounded-3xl shadow-soft">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center text-[#5C61F4] shrink-0">
+              <Database className="w-6 h-6" />
+            </div>
+            <div>
+              <h1 className="text-xl font-extrabold text-slate-800 tracking-tight">
+                Master Repository SAA
+              </h1>
+              <p className="text-xs font-medium text-slate-400 mt-0.5">
+                Kelola Master Field, approver, dan role code SAA.
+              </p>
+            </div>
+          </div>
+          {activeTab === "fields" ? (
+            <button onClick={() => handleOpenFieldModal()} className="inline-flex items-center justify-center gap-2 bg-[#5C61F4] hover:bg-indigo-600 text-white font-bold text-xs px-5 py-3 rounded-2xl shadow-soft transition-all active:scale-[0.99]">
+              <Plus size={16} /> <span>Tambah Master Field</span>
+            </button>
+          ) : activeTab === "approvers" ? (
+            <button onClick={() => handleOpenStepModal()} className="inline-flex items-center justify-center gap-2 bg-[#5C61F4] hover:bg-indigo-600 text-white font-bold text-xs px-5 py-3 rounded-2xl shadow-soft transition-all active:scale-[0.99]">
+              <Plus size={16} /> <span>Tambah Master Approver</span>
+            </button>
+          ) : (
+            <button onClick={() => handleOpenRoleModal()} className="inline-flex items-center justify-center gap-2 bg-[#5C61F4] hover:bg-indigo-600 text-white font-bold text-xs px-5 py-3 rounded-2xl shadow-soft transition-all active:scale-[0.99]">
+              <Plus size={16} /> <span>Tambah Role Code</span>
+            </button>
+          )}
         </div>
-        {activeTab === "fields" ? (
-          <button onClick={() => handleOpenFieldModal()} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg flex items-center gap-2 text-sm font-semibold shadow-sm transition">
-            <Plus size={16} /> Tambah Master Field
-          </button>
-        ) : activeTab === "approvers" ? (
-          <button onClick={() => handleOpenStepModal()} className="bg-cyan-600 hover:bg-cyan-700 text-white px-4 py-2.5 rounded-lg flex items-center gap-2 text-sm font-semibold shadow-sm transition">
-            <Plus size={16} /> Tambah Master Approver
-          </button>
-        ) : (
-          <button onClick={() => handleOpenRoleModal()} className="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2.5 rounded-lg flex items-center gap-2 text-sm font-semibold shadow-sm transition">
-            <Plus size={16} /> Tambah Role Code
-          </button>
-        )}
-      </div>
+      )}
 
-      {showTabs && <div className="flex border-b border-slate-200 gap-4">
-        <button onClick={() => setActiveTab("fields")} className={`pb-3 text-sm font-bold flex items-center gap-2 border-b-2 ${activeTab === "fields" ? "border-blue-600 text-blue-600" : "border-transparent text-slate-500 hover:text-slate-800"}`}>
-          <ListFilter size={16} /> Master Fields ({fields.length})
-        </button>
-        <button onClick={() => setActiveTab("approvers")} className={`pb-3 text-sm font-bold flex items-center gap-2 border-b-2 ${activeTab === "approvers" ? "border-cyan-600 text-cyan-600" : "border-transparent text-slate-500 hover:text-slate-800"}`}>
-          <ShieldCheck size={16} /> Master Approvers / Steps ({steps.length})
-        </button>
-        <button onClick={() => setActiveTab("roles")} className={`pb-3 text-sm font-bold flex items-center gap-2 border-b-2 ${activeTab === "roles" ? "border-slate-900 text-slate-900" : "border-transparent text-slate-500 hover:text-slate-800"}`}>
-          <ShieldCheck size={16} /> Role Codes ({roles.length})
-        </button>
-      </div>}
+      {showTabs && (
+        <div className="flex gap-2 overflow-x-auto bg-white border border-slate-100 p-2 rounded-2xl shadow-soft">
+          <button onClick={() => setActiveTab("fields")} className={`px-4 py-2 text-xs font-bold rounded-xl transition-all flex items-center gap-2 ${activeTab === "fields" ? "bg-[#5C61F4] text-white shadow-soft" : "text-slate-500 hover:text-slate-800 hover:bg-slate-50"}`}>
+            <ListFilter size={16} /> Master Fields ({fields.length})
+          </button>
+          <button onClick={() => setActiveTab("approvers")} className={`px-4 py-2 text-xs font-bold rounded-xl transition-all flex items-center gap-2 ${activeTab === "approvers" ? "bg-[#5C61F4] text-white shadow-soft" : "text-slate-500 hover:text-slate-800 hover:bg-slate-50"}`}>
+            <ShieldCheck size={16} /> Master Approvers / Steps ({steps.length})
+          </button>
+          <button onClick={() => setActiveTab("roles")} className={`px-4 py-2 text-xs font-bold rounded-xl transition-all flex items-center gap-2 ${activeTab === "roles" ? "bg-[#5C61F4] text-white shadow-soft" : "text-slate-500 hover:text-slate-800 hover:bg-slate-50"}`}>
+            <ShieldCheck size={16} /> Role Codes ({roles.length})
+          </button>
+        </div>
+      )}
+
+      {!showTabs && (
+        <div className="flex justify-end mb-4">
+          {activeTab === "fields" ? (
+            <button onClick={() => handleOpenFieldModal()} className="inline-flex items-center gap-2 bg-[#5C61F4] hover:bg-indigo-600 text-white font-bold text-xs px-4 py-2.5 rounded-2xl shadow-soft transition">
+              <Plus size={16} /> <span>Tambah Master Field</span>
+            </button>
+          ) : activeTab === "approvers" ? (
+            <button onClick={() => handleOpenStepModal()} className="inline-flex items-center gap-2 bg-[#5C61F4] hover:bg-indigo-600 text-white font-bold text-xs px-4 py-2.5 rounded-2xl shadow-soft transition">
+              <Plus size={16} /> <span>Tambah Master Approver</span>
+            </button>
+          ) : (
+            <button onClick={() => handleOpenRoleModal()} className="inline-flex items-center gap-2 bg-[#5C61F4] hover:bg-indigo-600 text-white font-bold text-xs px-4 py-2.5 rounded-2xl shadow-soft transition">
+              <Plus size={16} /> <span>Tambah Role Code</span>
+            </button>
+          )}
+        </div>
+      )}
 
       {/* TAB 1: MASTER FIELDS TABLE */}
       {activeTab === "fields" && (
-        <div className="bg-white border rounded-xl overflow-hidden shadow-sm">
-          <table className="w-full text-left text-sm text-slate-600">
-            <thead className="bg-slate-50 border-b text-xs uppercase text-slate-500 font-bold">
-              <tr>
-                <th className="p-4">Key ID</th>
+        <div className="bg-white border border-slate-100 rounded-3xl shadow-soft overflow-hidden">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-slate-50 text-slate-500 text-xs font-bold uppercase tracking-wider border-b border-slate-100">
+                <th className="p-4 pl-6">Key ID</th>
                 <th className="p-4">Label Field</th>
                 <th className="p-4">Tipe Input</th>
                 <th className="p-4">Section</th>
                 <th className="p-4">Assigned SAA Forms</th>
-                <th className="p-4 text-center">Aksi</th>
+                <th className="p-4 text-center pr-6">Aksi</th>
               </tr>
             </thead>
-            <tbody className="divide-y">
+            <tbody className="divide-y divide-slate-100 text-xs font-medium text-slate-700">
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="p-4 text-center text-slate-400">
+                  <td colSpan={6} className="p-12 text-center text-slate-400 font-medium">
                     Memuat data master...
                   </td>
                 </tr>
               ) : fields.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="p-4 text-center text-slate-400">
+                  <td colSpan={6} className="p-12 text-center text-slate-400 font-medium">
                     Belum ada Master Field. Klik &apos;Tambah Master Field&apos;.
                   </td>
                 </tr>
               ) : (
                 fields.map((item) => (
-                  <tr key={item.id} className="hover:bg-slate-50 transition">
-                    <td className="p-4 font-mono text-xs font-semibold text-slate-800">
+                  <tr key={item.id} className="hover:bg-slate-50/60 transition">
+                    <td className="p-4 pl-6 font-bold text-[#5C61F4]">
                       {item.fieldKey}
                     </td>
-                    <td className="p-4 font-medium text-slate-900">{item.label}</td>
+                    <td className="p-4 font-bold text-slate-800">{item.label}</td>
                     <td className="p-4">
-                      <span className="px-2 py-1 bg-slate-100 rounded text-xs text-slate-700 font-medium">
+                      <span className="px-2.5 py-1 bg-slate-100 rounded-full text-[11px] text-slate-700 font-bold">
                         {item.fieldType}
                       </span>
                     </td>
-                    <td className="p-4 text-xs font-semibold text-blue-600">
+                    <td className="p-4 font-bold text-indigo-600">
                       {item.section}
                     </td>
                     <td className="p-4">
@@ -376,24 +402,24 @@ export default function SaaMasterFieldsPage({
                         {item.assignedForms?.map((af, idx) => (
                           <span
                             key={idx}
-                            className="px-2 py-0.5 bg-blue-50 text-blue-700 border border-blue-200 rounded text-xs font-semibold"
+                            className="px-2.5 py-0.5 bg-indigo-50 text-[#5C61F4] border border-indigo-100 rounded-full text-[10px] font-bold"
                           >
                             {af.formConfig.code}
                           </span>
                         ))}
                       </div>
                     </td>
-                    <td className="p-4 text-center">
-                      <div className="flex justify-center gap-2">
+                    <td className="p-4 text-center pr-6">
+                      <div className="flex justify-center gap-1.5">
                         <button
                           onClick={() => handleOpenFieldModal(item)}
-                          className="p-1.5 text-slate-600 hover:text-blue-600 rounded-md hover:bg-slate-100"
+                          className="p-1.5 text-slate-500 hover:text-[#5C61F4] rounded-xl hover:bg-slate-100 transition"
                         >
                           <Edit2 size={16} />
                         </button>
                         <button
                           onClick={() => handleDeleteField(item.id)}
-                          className="p-1.5 text-slate-600 hover:text-red-600 rounded-md hover:bg-slate-100"
+                          className="p-1.5 text-slate-500 hover:text-rose-600 rounded-xl hover:bg-slate-100 transition"
                         >
                           <Trash2 size={16} />
                         </button>
@@ -409,61 +435,61 @@ export default function SaaMasterFieldsPage({
 
       {/* TAB 2: MASTER APPROVERS TABLE */}
       {activeTab === "approvers" && (
-        <div className="bg-white border rounded-xl overflow-hidden shadow-sm">
-          <table className="w-full text-left text-sm text-slate-600">
-            <thead className="bg-slate-50 border-b text-xs uppercase text-slate-500 font-bold">
-              <tr>
-                <th className="p-4">Role Code</th>
+        <div className="bg-white border border-slate-100 rounded-3xl shadow-soft overflow-hidden">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-slate-50 text-slate-500 text-xs font-bold uppercase tracking-wider border-b border-slate-100">
+                <th className="p-4 pl-6">Role Code</th>
                 <th className="p-4">Label Approver / Step Name</th>
                 <th className="p-4">Assigned SAA Forms</th>
-                <th className="p-4 text-center">Aksi</th>
+                <th className="p-4 text-center pr-6">Aksi</th>
               </tr>
             </thead>
-            <tbody className="divide-y">
+            <tbody className="divide-y divide-slate-100 text-xs font-medium text-slate-700">
               {loading ? (
                 <tr>
-                  <td colSpan={4} className="p-4 text-center text-slate-400">
+                  <td colSpan={4} className="p-12 text-center text-slate-400 font-medium">
                     Memuat data master approver...
                   </td>
                 </tr>
               ) : steps.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="p-4 text-center text-slate-400">
+                  <td colSpan={4} className="p-12 text-center text-slate-400 font-medium">
                     Belum ada Master Approver. Klik &apos;Tambah Master Approver&apos;.
                   </td>
                 </tr>
               ) : (
                 steps.map((item) => (
-                  <tr key={item.id} className="hover:bg-slate-50 transition">
-                    <td className="p-4 font-mono text-xs font-bold text-cyan-800">
-                      <span className="px-2 py-1 bg-cyan-50 border border-cyan-200 rounded">
+                  <tr key={item.id} className="hover:bg-slate-50/60 transition">
+                    <td className="p-4 pl-6 font-bold text-[#5C61F4]">
+                      <span className="px-2.5 py-1 bg-indigo-50 border border-indigo-100 rounded-full text-xs font-bold">
                         {item.role}
                       </span>
                     </td>
-                    <td className="p-4 font-bold text-slate-900">{item.label}</td>
+                    <td className="p-4 font-bold text-slate-800">{item.label}</td>
                     <td className="p-4">
                       <div className="flex flex-wrap gap-1">
                         {item.assignedForms?.map((af, idx) => (
                           <span
                             key={idx}
-                            className="px-2 py-0.5 bg-cyan-50 text-cyan-800 border border-cyan-200 rounded text-xs font-semibold"
+                            className="px-2.5 py-0.5 bg-indigo-50 text-[#5C61F4] border border-indigo-100 rounded-full text-[10px] font-bold"
                           >
                             {af.formConfig.code}
                           </span>
                         ))}
                       </div>
                     </td>
-                    <td className="p-4 text-center">
-                      <div className="flex justify-center gap-2">
+                    <td className="p-4 text-center pr-6">
+                      <div className="flex justify-center gap-1.5">
                         <button
                           onClick={() => handleOpenStepModal(item)}
-                          className="p-1.5 text-slate-600 hover:text-cyan-600 rounded-md hover:bg-slate-100"
+                          className="p-1.5 text-slate-500 hover:text-[#5C61F4] rounded-xl hover:bg-slate-100 transition"
                         >
                           <Edit2 size={16} />
                         </button>
                         <button
                           onClick={() => handleDeleteStep(item.id)}
-                          className="p-1.5 text-slate-600 hover:text-red-600 rounded-md hover:bg-slate-100"
+                          className="p-1.5 text-slate-500 hover:text-rose-600 rounded-xl hover:bg-slate-100 transition"
                         >
                           <Trash2 size={16} />
                         </button>
@@ -478,30 +504,30 @@ export default function SaaMasterFieldsPage({
       )}
 
       {activeTab === "roles" && (
-        <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
-          <table className="w-full text-left text-sm text-slate-600">
-            <thead className="border-b bg-slate-50 text-xs font-bold uppercase text-slate-500">
-              <tr>
-                <th className="p-4">Role Code</th>
+        <div className="bg-white border border-slate-100 rounded-3xl shadow-soft overflow-hidden">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-slate-50 text-slate-500 text-xs font-bold uppercase tracking-wider border-b border-slate-100">
+                <th className="p-4 pl-6">Role Code</th>
                 <th className="p-4">Nama Role</th>
                 <th className="p-4">Deskripsi</th>
                 <th className="p-4">Jenis</th>
-                <th className="p-4 text-center">Aksi</th>
+                <th className="p-4 text-center pr-6">Aksi</th>
               </tr>
             </thead>
-            <tbody className="divide-y">
+            <tbody className="divide-y divide-slate-100 text-xs font-medium text-slate-700">
               {roles.map((role) => (
-                <tr key={role.id}>
-                  <td className="p-4 font-mono text-xs font-bold text-slate-900">{role.code}</td>
-                  <td className="p-4 font-semibold text-slate-900">{role.name}</td>
-                  <td className="p-4 text-xs">{role.description || "-"}</td>
-                  <td className="p-4 text-xs">{role.isSystem ? "System" : "Customizable"}</td>
-                  <td className="p-4 text-center">
-                    <div className="flex justify-center gap-2">
-                      <button type="button" onClick={() => handleOpenRoleModal(role)} disabled={role.isSystem} aria-label={`Edit ${role.code}`} className="rounded p-1.5 text-slate-600 hover:bg-slate-100 hover:text-blue-600 disabled:opacity-30">
+                <tr key={role.id} className="hover:bg-slate-50/60 transition">
+                  <td className="p-4 pl-6 font-bold text-[#5C61F4]">{role.code}</td>
+                  <td className="p-4 font-bold text-slate-800">{role.name}</td>
+                  <td className="p-4 text-xs font-medium text-slate-500">{role.description || "-"}</td>
+                  <td className="p-4 text-xs font-bold">{role.isSystem ? "System" : "Customizable"}</td>
+                  <td className="p-4 text-center pr-6">
+                    <div className="flex justify-center gap-1.5">
+                      <button type="button" onClick={() => handleOpenRoleModal(role)} disabled={role.isSystem} aria-label={`Edit ${role.code}`} className="rounded-xl p-1.5 text-slate-500 hover:bg-slate-100 hover:text-[#5C61F4] disabled:opacity-30 transition">
                         <Edit2 size={16} />
                       </button>
-                      <button type="button" onClick={() => handleDeleteRole(role)} disabled={role.isSystem} aria-label={`Delete ${role.code}`} className="rounded p-1.5 text-slate-600 hover:bg-slate-100 hover:text-red-600 disabled:opacity-30">
+                      <button type="button" onClick={() => handleDeleteRole(role)} disabled={role.isSystem} aria-label={`Delete ${role.code}`} className="rounded-xl p-1.5 text-slate-500 hover:bg-slate-100 hover:text-rose-600 disabled:opacity-30 transition">
                         <Trash2 size={16} />
                       </button>
                     </div>
@@ -515,9 +541,9 @@ export default function SaaMasterFieldsPage({
 
       {/* MODAL 1: FIELD FORM */}
       {isFieldModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl max-w-lg w-full p-6 space-y-5 shadow-xl">
-            <h2 className="text-lg font-bold text-slate-900 border-b pb-3">
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white border border-slate-100 rounded-3xl max-w-lg w-full p-6 space-y-5 shadow-soft-lg">
+            <h2 className="text-base font-extrabold text-slate-800 border-b border-slate-100 pb-3">
               {editingId ? "Edit Master Field" : "Tambah Master Field Baru"}
             </h2>
 
@@ -531,7 +557,7 @@ export default function SaaMasterFieldsPage({
                   placeholder="Misal: idName, idPosition"
                   value={fieldKey}
                   onChange={(e) => setFieldKey(e.target.value)}
-                  className="w-full border rounded-lg p-2 text-sm font-mono"
+                  className="w-full border border-slate-200 rounded-2xl p-3 text-sm font-semibold text-slate-800 focus:outline-none focus:border-indigo-500"
                   required
                 />
               </div>
@@ -545,7 +571,7 @@ export default function SaaMasterFieldsPage({
                   placeholder="Misal: Name, Position"
                   value={fieldLabel}
                   onChange={(e) => setFieldLabel(e.target.value)}
-                  className="w-full border rounded-lg p-2 text-sm"
+                  className="w-full border border-slate-200 rounded-2xl p-3 text-sm font-semibold text-slate-800 focus:outline-none focus:border-indigo-500"
                   required
                 />
               </div>
@@ -558,7 +584,7 @@ export default function SaaMasterFieldsPage({
                   <select
                     value={fieldType}
                     onChange={(e) => setFieldType(e.target.value)}
-                    className="w-full border rounded-lg p-2 text-sm bg-white"
+                    className="w-full border border-slate-200 rounded-2xl p-3 text-sm bg-white font-semibold text-slate-800 focus:outline-none focus:border-indigo-500"
                   >
                     <option value="TEXT">Input Text</option>
                     <option value="DATE">Tanggal</option>
@@ -578,7 +604,7 @@ export default function SaaMasterFieldsPage({
                     type="text"
                     value={section}
                     onChange={(e) => setSection(e.target.value)}
-                    className="w-full border rounded-lg p-2 text-sm bg-white"
+                    className="w-full border border-slate-200 rounded-2xl p-3 text-sm bg-white font-semibold text-slate-800 focus:outline-none focus:border-indigo-500"
                     placeholder="Nama section"
                     required
                   />
@@ -595,28 +621,28 @@ export default function SaaMasterFieldsPage({
                     value={fieldOptions}
                     onChange={(event) => setFieldOptions(event.target.value)}
                     placeholder="Read, Write, Admin"
-                    className="w-full border rounded-lg p-2 text-sm"
+                    className="w-full border border-slate-200 rounded-2xl p-3 text-sm font-medium text-slate-800 focus:outline-none focus:border-indigo-500"
                     required
                   />
                 </div>
               )}
 
-              <div className="border-t pt-3">
+              <div className="border-t border-slate-100 pt-3">
                 <label className="block text-xs font-bold text-slate-700 mb-2 flex items-center gap-1">
-                  <CheckSquare size={14} className="text-blue-600" />
+                  <CheckSquare size={14} className="text-[#5C61F4]" />
                   ASSIGN KE FORM SAA MANA SAJA:
                 </label>
-                <div className="grid grid-cols-2 gap-2 max-h-36 overflow-y-auto border p-3 rounded-lg bg-slate-50">
+                <div className="grid grid-cols-2 gap-2 max-h-36 overflow-y-auto border border-slate-100 p-3 rounded-2xl bg-slate-50">
                   {formConfigs.map((config) => (
                     <label
                       key={config.id}
-                      className="flex items-center gap-2 text-xs font-medium cursor-pointer"
+                      className="flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer select-none"
                     >
                       <input
                         type="checkbox"
                         checked={selectedFormIds.includes(config.id)}
                         onChange={() => toggleFormAssignment(config.id)}
-                        className="rounded text-blue-600"
+                        className="rounded text-indigo-600 accent-indigo-600"
                       />
                       {config.name} ({config.code})
                     </label>
@@ -624,17 +650,17 @@ export default function SaaMasterFieldsPage({
                 </div>
               </div>
 
-              <div className="flex justify-end gap-2 border-t pt-4">
+              <div className="flex justify-end gap-3 border-t border-slate-100 pt-4">
                 <button
                   type="button"
                   onClick={() => setIsFieldModalOpen(false)}
-                  className="px-4 py-2 border rounded-lg text-sm text-slate-600 hover:bg-slate-100"
+                  className="px-5 py-2.5 border border-slate-200 rounded-2xl text-xs font-bold text-slate-700 hover:bg-slate-50 transition"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold shadow hover:bg-blue-700"
+                  className="px-5 py-2.5 bg-[#5C61F4] text-white rounded-2xl text-xs font-bold shadow-soft hover:bg-indigo-600 transition"
                 >
                   Simpan Master Field
                 </button>
@@ -646,9 +672,9 @@ export default function SaaMasterFieldsPage({
 
       {/* MODAL 2: APPROVER STEP FORM */}
       {isStepModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl max-w-lg w-full p-6 space-y-5 shadow-xl">
-            <h2 className="text-lg font-bold text-slate-900 border-b pb-3">
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white border border-slate-100 rounded-3xl max-w-lg w-full p-6 space-y-5 shadow-soft-lg">
+            <h2 className="text-base font-extrabold text-slate-800 border-b border-slate-100 pb-3">
               {editingId ? "Edit Master Approver Step" : "Tambah Master Approver Baru"}
             </h2>
 
@@ -660,7 +686,7 @@ export default function SaaMasterFieldsPage({
                 <select
                   value={stepRole}
                   onChange={(e) => setStepRole(e.target.value)}
-                  className="w-full border rounded-lg p-2 text-sm bg-white font-mono"
+                  className="w-full border border-slate-200 rounded-2xl p-3 text-sm bg-white font-semibold text-slate-800 focus:outline-none focus:border-indigo-500"
                 >
                   {roles.filter((role) => !role.isSystem).map((role) => (
                     <option key={role.id} value={role.code}>{role.code} ({role.name})</option>
@@ -677,27 +703,27 @@ export default function SaaMasterFieldsPage({
                   placeholder="Misal: Department Head Approval, IT Verification Step"
                   value={stepLabel}
                   onChange={(e) => setStepLabel(e.target.value)}
-                  className="w-full border rounded-lg p-2 text-sm"
+                  className="w-full border border-slate-200 rounded-2xl p-3 text-sm font-medium text-slate-800 focus:outline-none focus:border-indigo-500"
                   required
                 />
               </div>
 
-              <div className="border-t pt-3">
+              <div className="border-t border-slate-100 pt-3">
                 <label className="block text-xs font-bold text-slate-700 mb-2 flex items-center gap-1">
-                  <CheckSquare size={14} className="text-cyan-600" />
+                  <CheckSquare size={14} className="text-[#5C61F4]" />
                   ASSIGN KE FORM SAA MANA SAJA:
                 </label>
-                <div className="grid grid-cols-2 gap-2 max-h-36 overflow-y-auto border p-3 rounded-lg bg-slate-50">
+                <div className="grid grid-cols-2 gap-2 max-h-36 overflow-y-auto border border-slate-100 p-3 rounded-2xl bg-slate-50">
                   {formConfigs.map((config) => (
                     <label
                       key={config.id}
-                      className="flex items-center gap-2 text-xs font-medium cursor-pointer"
+                      className="flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer select-none"
                     >
                       <input
                         type="checkbox"
                         checked={selectedFormIds.includes(config.id)}
                         onChange={() => toggleFormAssignment(config.id)}
-                        className="rounded text-cyan-600"
+                        className="rounded text-indigo-600 accent-indigo-600"
                       />
                       {config.name} ({config.code})
                     </label>
@@ -705,17 +731,17 @@ export default function SaaMasterFieldsPage({
                 </div>
               </div>
 
-              <div className="flex justify-end gap-2 border-t pt-4">
+              <div className="flex justify-end gap-3 border-t border-slate-100 pt-4">
                 <button
                   type="button"
                   onClick={() => setIsStepModalOpen(false)}
-                  className="px-4 py-2 border rounded-lg text-sm text-slate-600 hover:bg-slate-100"
+                  className="px-5 py-2.5 border border-slate-200 rounded-2xl text-xs font-bold text-slate-700 hover:bg-slate-50 transition"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-cyan-600 text-white rounded-lg text-sm font-semibold shadow hover:bg-cyan-700"
+                  className="px-5 py-2.5 bg-[#5C61F4] text-white rounded-2xl text-xs font-bold shadow-soft hover:bg-indigo-600 transition"
                 >
                   Simpan Master Approver
                 </button>
@@ -726,9 +752,9 @@ export default function SaaMasterFieldsPage({
       )}
 
       {isRoleModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
-          <div className="w-full max-w-lg space-y-5 rounded-xl bg-white p-6 shadow-xl">
-            <h2 className="border-b pb-3 text-lg font-bold text-slate-900">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
+          <div className="w-full max-w-lg space-y-5 rounded-3xl border border-slate-100 bg-white p-6 shadow-soft-lg">
+            <h2 className="border-b border-slate-100 pb-3 text-base font-extrabold text-slate-800">
               {editingId ? "Edit Role" : "Tambah Role Code"}
             </h2>
             <form onSubmit={handleSubmitRole} className="space-y-4">
@@ -739,7 +765,7 @@ export default function SaaMasterFieldsPage({
                   onChange={(event) => setRoleCode(event.target.value.toUpperCase().replace(/[^A-Z0-9_]/g, "_"))}
                   disabled={Boolean(editingId)}
                   placeholder="Contoh: PROCUREMENT_APPROVER"
-                  className="mt-1 w-full border p-2 font-mono text-sm disabled:bg-slate-100"
+                  className="mt-1.5 w-full border border-slate-200 rounded-2xl p-3 font-semibold text-sm disabled:bg-slate-100 text-slate-800 focus:outline-none focus:border-indigo-500"
                   required
                 />
               </label>
@@ -749,7 +775,7 @@ export default function SaaMasterFieldsPage({
                   value={roleName}
                   onChange={(event) => setRoleName(event.target.value)}
                   placeholder="Nama role yang tampil"
-                  className="mt-1 w-full border p-2 text-sm"
+                  className="mt-1.5 w-full border border-slate-200 rounded-2xl p-3 text-sm font-medium text-slate-800 focus:outline-none focus:border-indigo-500"
                   required
                 />
               </label>
@@ -759,14 +785,14 @@ export default function SaaMasterFieldsPage({
                   value={roleDescription}
                   onChange={(event) => setRoleDescription(event.target.value)}
                   rows={2}
-                  className="mt-1 w-full border p-2 text-sm"
+                  className="mt-1.5 w-full border border-slate-200 rounded-2xl p-3 text-sm font-medium text-slate-800 focus:outline-none focus:border-indigo-500"
                 />
               </label>
-              <div className="flex justify-end gap-2 border-t pt-4">
-                <button type="button" onClick={() => setIsRoleModalOpen(false)} className="border px-4 py-2 text-sm text-slate-600 hover:bg-slate-100">
+              <div className="flex justify-end gap-3 border-t border-slate-100 pt-4">
+                <button type="button" onClick={() => setIsRoleModalOpen(false)} className="border border-slate-200 px-5 py-2.5 rounded-2xl text-xs font-bold text-slate-700 hover:bg-slate-50 transition">
                   Batal
                 </button>
-                <button type="submit" className="bg-slate-900 px-4 py-2 text-sm font-semibold text-cyan-300 hover:bg-slate-800">
+                <button type="submit" className="bg-[#5C61F4] hover:bg-indigo-600 px-5 py-2.5 rounded-2xl text-xs font-bold text-white shadow-soft transition">
                   Simpan Role
                 </button>
               </div>

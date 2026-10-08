@@ -36,8 +36,9 @@ export default function SaaDynamicField({
   readOnly = false,
 }: SaaDynamicFieldProps) {
   const options = getOptions(field.options);
-  const requiredMark = field.isRequired && <span className="text-red-600"> *</span>;
-  const controlClass = "w-full border-2 border-slate-900 bg-white p-2.5 text-sm";
+  const requiredMark = field.isRequired && <span className="text-rose-500"> *</span>;
+  const controlClass = "w-full border border-slate-200 bg-white p-3 text-sm rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all font-medium text-slate-800 placeholder-slate-400";
+  
   const handleChange = (nextValue: unknown) => {
     if (!readOnly) {
       onChange(field.fieldKey, nextValue);
@@ -54,7 +55,7 @@ export default function SaaDynamicField({
           readOnly={readOnly || true}
           disabled={readOnly}
           required={field.isRequired}
-          className={`${controlClass} mt-1 border-slate-300 bg-slate-100 text-slate-600`}
+          className={`${controlClass} mt-1.5 border-slate-200 bg-slate-50 text-slate-500`}
         />
       </label>
     );
@@ -67,8 +68,9 @@ export default function SaaDynamicField({
         <select
           value={typeof value === "string" ? value : ""}
           required={field.isRequired}
+          disabled={readOnly}
           onChange={(event) => onChange(field.fieldKey, event.target.value)}
-          className={`${controlClass} mt-1`}
+          className={`${controlClass} mt-1.5`}
         >
           <option value="">Pilih {field.label}</option>
           {departments.map((department) => (
@@ -87,8 +89,9 @@ export default function SaaDynamicField({
           rows={3}
           value={typeof value === "string" ? value : ""}
           required={field.isRequired}
+          disabled={readOnly}
           onChange={(event) => onChange(field.fieldKey, event.target.value)}
-          className={`${controlClass} mt-1`}
+          className={`${controlClass} mt-1.5`}
         />
       </label>
     );
@@ -104,7 +107,7 @@ export default function SaaDynamicField({
           required={field.isRequired}
           disabled={readOnly}
           onChange={(event) => handleChange(event.target.value)}
-          className={`${controlClass} mt-1`}
+          className={`${controlClass} mt-1.5`}
         />
       </label>
     );
@@ -112,14 +115,14 @@ export default function SaaDynamicField({
 
   if (field.fieldType === "CHECKBOX") {
     return (
-      <label className="flex items-center gap-2 py-2 text-sm font-semibold text-slate-800">
+      <label className="flex items-center gap-2.5 py-2 text-sm font-semibold text-slate-800 cursor-pointer select-none">
         <input
           type="checkbox"
           checked={value === true}
           required={field.isRequired}
           disabled={readOnly}
           onChange={(event) => handleChange(event.target.checked)}
-          className="h-4 w-4 accent-cyan-700"
+          className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 accent-indigo-600"
         />
         {field.label}{requiredMark}
       </label>
@@ -133,8 +136,9 @@ export default function SaaDynamicField({
         <select
           value={typeof value === "string" ? value : ""}
           required={field.isRequired}
+          disabled={readOnly}
           onChange={(event) => onChange(field.fieldKey, event.target.value)}
-          className={`${controlClass} mt-1`}
+          className={`${controlClass} mt-1.5`}
         >
           <option value="">Pilih {field.label}</option>
           {options.map((option) => <option key={option} value={option}>{option}</option>)}
@@ -147,9 +151,9 @@ export default function SaaDynamicField({
     return (
       <fieldset className="space-y-2">
         <legend className="text-xs font-bold text-slate-700">{field.label}{requiredMark}</legend>
-        <div className="flex flex-wrap gap-x-5 gap-y-2">
+        <div className="flex flex-wrap gap-x-6 gap-y-2">
           {options.map((option) => (
-            <label key={option} className="flex items-center gap-2 text-sm text-slate-800">
+            <label key={option} className="flex items-center gap-2 text-sm font-medium text-slate-800 cursor-pointer select-none">
               <input
                 type="radio"
                 name={field.fieldKey}
@@ -158,7 +162,7 @@ export default function SaaDynamicField({
                 required={field.isRequired}
                 disabled={readOnly}
                 onChange={() => handleChange(option)}
-                className="h-4 w-4 accent-cyan-700"
+                className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 accent-indigo-600"
               />
               {option}
             </label>
@@ -176,8 +180,9 @@ export default function SaaDynamicField({
           rows={3}
           value={typeof value === "string" ? value : ""}
           required={field.isRequired}
+          disabled={readOnly}
           onChange={(event) => onChange(field.fieldKey, event.target.value)}
-          className={`${controlClass} mt-1`}
+          className={`${controlClass} mt-1.5`}
         />
       </label>
     );
@@ -204,7 +209,7 @@ export default function SaaDynamicField({
         required={field.isRequired}
         disabled={readOnly}
         onChange={(event) => handleChange(event.target.value)}
-        className={`${controlClass} mt-1`}
+        className={`${controlClass} mt-1.5`}
       />
     </label>
   );

@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { createDigitalSignature } from "./saa.ts";
+import { createDigitalSignature } from "./saa";
 
 test("createDigitalSignature produces a stable timestamped signature", () => {
   const timestamp = "2026-10-06T00:00:00.000Z";
