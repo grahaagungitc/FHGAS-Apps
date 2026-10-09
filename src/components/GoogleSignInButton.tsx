@@ -5,9 +5,10 @@ import { signIn } from "next-auth/react";
 
 interface GoogleSignInButtonProps {
   label?: string;
+  mode?: "login" | "signup";
 }
 
-export default function GoogleSignInButton({ label = "Google" }: GoogleSignInButtonProps) {
+export default function GoogleSignInButton({ label = "Google", mode = "login" }: GoogleSignInButtonProps) {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
 
@@ -15,7 +16,11 @@ export default function GoogleSignInButton({ label = "Google" }: GoogleSignInBut
     setPending(true);
     setError("");
     try {
-      await signIn("google", { redirectTo: "/dashboard" });
+      if (mode === "signup") {
+        await signIn("google", { callbackUrl: "/login?signup=true", redirectTo: "/login?signup=true" });
+      } else {
+        await signIn("google", { redirectTo: "/dashboard" });
+      }
     } catch (signInError) {
       console.error("Google sign-in failed:", signInError);
       setError("Login Google gagal dimulai. Periksa koneksi dan coba lagi.");

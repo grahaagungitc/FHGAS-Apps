@@ -1,6 +1,7 @@
 import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import { db } from "@/lib/db";
+import { requestUnregisteredAccess } from "@/lib/access-requests";
 
 const googleClientId = process.env.GOOGLE_CLIENT_ID || process.env.AUTH_GOOGLE_ID || "";
 const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET || process.env.AUTH_GOOGLE_SECRET || "";
@@ -25,7 +26,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       try {
         const email = user.email.trim();
 
-        // Pencarian email case-insensitive untuk mengatasi perbedaan huruf besar/kecil di DB (e.g. grahaagungHM@favehotels.com)
+        // 1. Cek apakah user terdaftar di tabel User (Case-Insensitive)
         const existingUser = await db.user.findFirst({
           where: {
             email: {
@@ -35,11 +36,17 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           },
         });
 
-        // Jika user ditemukan di database, izinkan login
+        // Jika user terdaftar, izinkan login langsung ke /dashboard
         if (existingUser) return true;
 
-        // Jika email belum terdaftar di User DB, alihkan ke login dengan status NotRegistered
-        return "/login?error=NotRegistered";
+        // 2. Jika user BELUM terdaftar di User DB, ajukan/cek status permohonan akses
+        await requestUnregisteredAccess({
+          email: email,
+          name: user.name || user.email,
+        });
+
+        // Tampilkan pesan status pendaftaran dikirim ke admin
+        return "/login?error=AccessPending";
       } catch (error) {
         console.error("Database error during sign-in:", error);
         return false;
