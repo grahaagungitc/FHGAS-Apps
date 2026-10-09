@@ -5,16 +5,21 @@ import { db } from "@/lib/db";
 
 export async function submitSignUpAction(data: { name: string; email: string }) {
   try {
-    const email = data.email.trim().toLowerCase();
+    const email = data.email.trim();
     const name = data.name.trim();
 
     if (!email || !name) {
       return { success: false, message: "Nama dan Email wajib diisi." };
     }
 
-    // Check if user already exists in User table
-    const existingUser = await db.user.findUnique({
-      where: { email },
+    // Check if user already exists in User table case-insensitively
+    const existingUser = await db.user.findFirst({
+      where: {
+        email: {
+          equals: email,
+          mode: "insensitive",
+        },
+      },
     });
 
     if (existingUser) {
@@ -35,4 +40,3 @@ export async function submitSignUpAction(data: { name: string; email: string }) 
     };
   }
 }
-
