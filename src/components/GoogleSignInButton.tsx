@@ -17,9 +17,9 @@ export default function GoogleSignInButton({ label = "Google", mode = "login" }:
     setError("");
     try {
       if (mode === "signup") {
-        await signIn("google", { callbackUrl: "/login?signup=true", redirectTo: "/login?signup=true" });
+        await signIn("google", { callbackUrl: "/login?signup=true" });
       } else {
-        await signIn("google", { redirectTo: "/dashboard" });
+        await signIn("google", { callbackUrl: "/dashboard" });
       }
     } catch (signInError) {
       console.error("Google sign-in failed:", signInError);

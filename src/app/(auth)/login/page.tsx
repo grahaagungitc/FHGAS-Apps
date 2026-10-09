@@ -1,10 +1,20 @@
+import { auth } from "@/auth";
+import { redirect } from "next/navigation";
 import AuthForm from "./AuthForm";
 
-export default function LoginPage({
+export default async function LoginPage({
   searchParams,
 }: {
-  searchParams?: { error?: string; mode?: string };
+  searchParams?: Promise<{ error?: string; mode?: string }>;
 }) {
+  const session = await auth();
+
+  if (session?.user) {
+    redirect("/dashboard");
+  }
+
+  const resolvedParams = searchParams ? await searchParams : undefined;
+
   return (
     <div className="min-h-screen bg-[#F8FAFC] flex flex-col items-center justify-center p-4 sm:p-6 relative overflow-hidden">
       {/* Soft Decorative Ambient Circles */}
@@ -13,8 +23,8 @@ export default function LoginPage({
 
       {/* Render Auth Form supporting Login & Sign Up */}
       <AuthForm
-        initialError={searchParams?.error}
-        initialMode={searchParams?.mode === "signup" ? "signup" : "login"}
+        initialError={resolvedParams?.error}
+        initialMode={resolvedParams?.mode === "signup" ? "signup" : "login"}
       />
     </div>
   );
