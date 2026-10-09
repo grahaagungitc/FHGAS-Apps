@@ -1,7 +1,6 @@
 import { auth, signOut } from "@/auth";
 import { redirect } from "next/navigation";
-import Sidebar from "@/components/Sidebar";
-import NotificationBell from "@/components/NotificationBell";
+import DashboardShell from "@/components/DashboardShell";
 
 export default async function DashboardLayout({
   children,
@@ -20,25 +19,16 @@ export default async function DashboardLayout({
   };
 
   return (
-    <div className="flex min-h-screen bg-[#F8FAFC]">
-      <Sidebar
-        user={{
-          name: session.user?.name,
-          email: session.user?.email,
-          systemRole: (session.user as any)?.systemRole,
-          isIT: (session.user as any)?.isIT,
-        }}
-        signOutAction={handleSignOut}
-      />
-
-      <main className="flex-1 p-8 overflow-y-auto">
-        <div className="mx-auto max-w-7xl">
-          <div className="mb-5 flex justify-end">
-            <NotificationBell />
-          </div>
-          {children}
-        </div>
-      </main>
-    </div>
+    <DashboardShell
+      user={{
+        name: session.user?.name,
+        email: session.user?.email,
+        systemRole: (session.user as any)?.systemRole,
+        isIT: (session.user as any)?.isIT,
+      }}
+      signOutAction={handleSignOut}
+    >
+      {children}
+    </DashboardShell>
   );
 }
