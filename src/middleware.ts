@@ -15,9 +15,11 @@ export async function middleware(req: NextRequest) {
   }
 
   // 2. Ambil JWT Token
+  const secret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET || "super-secret-key-hms-hotel-2026";
   const token = await getToken({
     req,
-    secret: process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET,
+    secret,
+    secureCookie: process.env.NODE_ENV === "production" || req.url.startsWith("https://"),
   });
 
   const isApiRoute = pathname.startsWith("/api");

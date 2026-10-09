@@ -20,6 +20,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   callbacks: {
     async signIn({ user }) {
       if (!user?.email) {
+        console.error("[AUTH_SIGNIN] User object has no email.");
         return false;
       }
 
@@ -37,19 +38,28 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         });
 
         // Jika user terdaftar, izinkan login langsung ke /dashboard
-        if (existingUser) return true;
+        if (existingUser) {
+          console.log(`[AUTH_SIGNIN] Login success for registered user: ${email}`);
+          return true;
+        }
 
         // 2. Jika user BELUM terdaftar di User DB, ajukan/cek status permohonan akses
-        await requestUnregisteredAccess({
-          email: email,
-          name: user.name || user.email,
-        });
+        console.log(`[AUTH_SIGNIN] Unregistered user attempted login: ${email}. Creating AccessRequest...`);
+        try {
+          await requestUnregisteredAccess({
+            email: email,
+            name: user.name || user.email,
+          });
+        } catch (reqError) {
+          console.error("[AUTH_SIGNIN] Failed to record AccessRequest:", reqError);
+        }
 
         // Tampilkan pesan status pendaftaran dikirim ke admin
         return "/login?error=AccessPending";
       } catch (error) {
-        console.error("Database error during sign-in:", error);
-        return false;
+        console.error("[AUTH_SIGNIN] Database error during sign-in:", error);
+        // Kembali ke login dengan query error NotRegistered
+        return "/login?error=NotRegistered";
       }
     },
     async jwt({ token, user }) {
