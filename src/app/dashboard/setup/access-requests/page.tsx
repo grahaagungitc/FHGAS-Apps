@@ -83,7 +83,7 @@ export default function AccessRequestsPage() {
   };
 
   return (
-    <section className="mx-auto max-w-5xl space-y-6">
+    <section className="w-full space-y-6">
       <header className="flex items-center gap-4 bg-white border border-slate-100 rounded-3xl p-6 shadow-soft">
         <div className="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center text-[#5C61F4] shrink-0">
           <ShieldCheck className="w-6 h-6" />

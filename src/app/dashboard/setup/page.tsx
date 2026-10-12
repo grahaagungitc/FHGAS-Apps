@@ -1,16 +1,18 @@
 import Link from "next/link";
-import { Building2, Database, SlidersHorizontal, Users } from "lucide-react";
+import { Building2, Database, SlidersHorizontal, Users, ShieldCheck, Palette } from "lucide-react";
 
 const setupLinks = [
 	{ href: "/dashboard/setup/users", label: "User Management", desc: "Kelola pengguna dan peran sistem", icon: Users, color: "bg-[#8B5CF6] text-white" },
+	{ href: "/dashboard/setup/roles", label: "Roles & Permission Matrix", desc: "Konfigurasi role dinamis dan hak akses modul sistem", icon: ShieldCheck, color: "bg-[#5C61F4] text-white" },
+	{ href: "/dashboard/setup/theme", label: "UI & Branding Customizer", desc: "Ubah warna, font, logo icon, dan nama aplikasi secara GUI", icon: Palette, color: "bg-[#EC4899] text-white" },
 	{ href: "/dashboard/setup/departments", label: "Department Management", desc: "Kelola daftar departemen hotel", icon: Building2, color: "bg-[#2DD4BF] text-white" },
-	{ href: "/dashboard/setup/saa-config", label: "SAA Configuration", desc: "Konfigurasi formulir & langkah persetujuan", icon: SlidersHorizontal, color: "bg-[#5C61F4] text-white" },
+	{ href: "/dashboard/setup/saa-config", label: "SAA Configuration", desc: "Konfigurasi formulir & langkah persetujuan", icon: SlidersHorizontal, color: "bg-[#06B6D4] text-white" },
 	{ href: "/dashboard/setup/saa-fields", label: "SAA Master Fields", desc: "Repositori field permohonan dinamis", icon: Database, color: "bg-[#FFB800] text-white" },
 ];
 
 export default function SetupPage() {
 	return (
-		<section className="space-y-6 max-w-5xl mx-auto">
+		<section className="space-y-6 w-full">
 			<header className="bg-white border border-slate-100 p-6 rounded-3xl shadow-soft">
 				<h1 className="text-2xl font-extrabold text-slate-800 tracking-tight">System Setup</h1>
 				<p className="text-xs font-medium text-slate-400 mt-0.5">Kelola data master dan konfigurasi aplikasi</p>

@@ -181,7 +181,7 @@ export default function SaaCreatePage() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6">
+    <div className="w-full space-y-6">
       <header className="flex flex-wrap items-center gap-4 bg-white border border-slate-100 rounded-3xl p-6 shadow-soft">
         <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-50 text-[#5C61F4]">
           <FileSignature className="h-6 w-6" />

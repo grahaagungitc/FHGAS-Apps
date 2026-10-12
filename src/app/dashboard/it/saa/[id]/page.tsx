@@ -173,7 +173,7 @@ export default function SaaRequestDetailPage() {
   useEffect(() => {
     if (!request) return;
 
-    const saaNumber = formatSaaNumber(request.formType, request.name, request.requestNumber);
+    const saaNumber = formatSaaNumber(request.formType, request.name, request.requestNumber, request.id);
     const signatures = [
       ...(request.requesterSignature ? [{
         id: `requester-${request.id}`,
@@ -228,14 +228,14 @@ export default function SaaRequestDetailPage() {
   );
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6">
+    <div className="w-full space-y-6">
       <Link href="/dashboard/it/saa" className="inline-flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-[#5C61F4] transition-colors">
         <ArrowLeft className="h-4 w-4" /> Daftar SAA
       </Link>
 
       <header className="flex flex-wrap items-start justify-between gap-4 bg-white border border-slate-100 rounded-3xl p-6 shadow-soft">
         <div>
-          <p className="text-xs font-bold text-[#5C61F4]">{formatSaaNumber(request.formType, request.name, request.requestNumber)}</p>
+          <p className="text-xs font-bold text-[#5C61F4]">{formatSaaNumber(request.formType, request.name, request.requestNumber, request.id)}</p>
           <h1 className="mt-1 text-2xl font-extrabold text-slate-800 tracking-tight">{request.formConfig?.name || request.formType}</h1>
           <p className="mt-0.5 text-xs font-medium text-slate-400">{request.actionType} · {request.status}</p>
         </div>

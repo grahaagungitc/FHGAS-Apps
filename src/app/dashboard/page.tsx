@@ -12,6 +12,7 @@ import {
   ShieldAlert,
   ArrowUpRight,
 } from "lucide-react";
+import GlobalSearchBar from "@/components/GlobalSearchBar";
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -34,40 +35,17 @@ export default async function DashboardPage() {
     .toUpperCase();
 
   return (
-    <div className="space-y-8 max-w-6xl mx-auto">
-      {/* Top Header Row matching Reference UI: "Howdy, [User Name]" with Avatar */}
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm font-semibold text-slate-400">Howdy,</p>
-          <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight mt-0.5">
-            {userName}
-          </h1>
-        </div>
-
-        {/* Rounded User Avatar */}
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-base shadow-soft ring-4 ring-white">
-            {initials}
-          </div>
-        </div>
+    <div className="space-y-8 w-full">
+      {/* Top Header Row matching Reference UI: "Howdy, [User Name]" */}
+      <div>
+        <p className="text-sm font-semibold text-slate-400">Howdy,</p>
+        <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight mt-0.5">
+          {userName}
+        </h1>
       </div>
 
-      {/* Search Bar matching Reference UI */}
-      <div className="relative">
-        <div className="flex items-center bg-white border border-slate-200 rounded-2xl p-2 pl-5 shadow-soft focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-100 transition-all">
-          <input
-            type="text"
-            placeholder="Search SAA requests, departments, users..."
-            className="w-full text-sm font-medium text-slate-700 placeholder-slate-400 bg-transparent outline-none"
-          />
-          <button
-            type="button"
-            className="w-10 h-10 bg-[#5C61F4] hover:bg-indigo-600 rounded-xl flex items-center justify-center text-white transition-colors shrink-0 shadow-sm"
-          >
-            <Search className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
+      {/* Real-time Global Search Bar */}
+      <GlobalSearchBar />
 
       {/* Module Categories matching the 4 Pastel Square Cards in reference image */}
       <div>

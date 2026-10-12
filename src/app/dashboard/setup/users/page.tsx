@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { UserPlus, Pencil, Trash2, ShieldCheck, Loader2, X } from "lucide-react";
+import DragScrollContainer from "@/components/DragScrollContainer";
 
 export type UserRole = string;
 
@@ -273,7 +274,7 @@ export default function UserManagementPage() {
   };
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto pb-12">
+    <div className="space-y-6 w-full pb-12">
       {/* Header Banner */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white border border-slate-100 p-6 rounded-3xl shadow-soft">
         <div>
@@ -297,8 +298,8 @@ export default function UserManagementPage() {
 
       {/* Main Table Card */}
       <div className="bg-white border border-slate-100 rounded-3xl shadow-soft overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+        <DragScrollContainer>
+          <table className="w-full text-left border-collapse min-w-[700px]">
             <thead>
               <tr className="bg-slate-50 text-slate-500 text-xs font-bold uppercase tracking-wider border-b border-slate-100">
                 <th className="p-4 pl-6">USER / EMAIL</th>
@@ -395,7 +396,7 @@ export default function UserManagementPage() {
               )}
             </tbody>
           </table>
-        </div>
+        </DragScrollContainer>
       </div>
 
       {/* Info Card */}

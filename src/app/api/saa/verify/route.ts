@@ -76,6 +76,7 @@ export async function GET(request: Request) {
   const requesterRecord = await db.saaRequest.findFirst({
     where: { requesterSignature: signature },
     select: {
+      id: true,
       requestNumber: true,
       formType: true,
       name: true,
@@ -86,7 +87,7 @@ export async function GET(request: Request) {
 
   if (requesterRecord) {
     return verificationImage(
-      formatSaaNumber(requesterRecord.formType, requesterRecord.name, requesterRecord.requestNumber),
+      formatSaaNumber(requesterRecord.formType, requesterRecord.name, requesterRecord.requestNumber, requesterRecord.id),
       "Pengajuan",
       requesterRecord.requesterSignedByName || requesterRecord.name,
       [{ label: "Waktu Request", value: formatTimestamp(requesterRecord.requesterSignedAt) }],
@@ -102,7 +103,7 @@ export async function GET(request: Request) {
       signedByName: true,
       approver: { select: { name: true } },
       saaRequest: {
-        select: { requestNumber: true, formType: true, name: true },
+        select: { id: true, requestNumber: true, formType: true, name: true },
       },
     },
   });
@@ -116,6 +117,7 @@ export async function GET(request: Request) {
       approvalRecord.saaRequest.formType,
       approvalRecord.saaRequest.name,
       approvalRecord.saaRequest.requestNumber,
+      approvalRecord.saaRequest.id,
     ),
     "Approval",
     approvalRecord.signedByName || approvalRecord.approver.name,

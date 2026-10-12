@@ -40,6 +40,7 @@ model User {
   assignedSaaApprovalTasks SaaApprovalTask[]
   notifications      Notification[]
   resolvedAccessRequests AccessRequest[] @relation("AccessRequestResolver")
+  remittanceRecords  RemittanceRecord[]
 
   createdAt          DateTime             @default(now())
   updatedAt          DateTime             @updatedAt
@@ -180,6 +181,44 @@ model SystemRole {
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
   UserRole    UserRole[]
+  permissions RoleModulePermission[]
+}
+
+model AppModule {
+  id          String                 @id @default(cuid())
+  code        String                 @unique // e.g. "FO_REMITTANCE", "IT_SAA", "SETUP_USERS"
+  name        String                 // e.g. "Front Desk Remittance"
+  category    String                 // e.g. "Front Office", "IT", "Setup", "Departments"
+  description String?
+  path        String?                // e.g. "/dashboard/departments/fo/front-desk"
+  isSystem    Boolean                @default(false)
+  createdAt   DateTime               @default(now())
+  updatedAt   DateTime               @updatedAt
+  permissions RoleModulePermission[]
+}
+
+model RoleModulePermission {
+  id          String      @id @default(cuid())
+  roleId      String
+  moduleId    String
+  accessLevel String      @default("READ_WRITE") // "NONE", "READ_ONLY", "READ_WRITE", "FULL_ACCESS"
+  canApprove  Boolean     @default(false)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  role        SystemRole  @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  module      AppModule   @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, moduleId])
+  @@index([roleId])
+  @@index([moduleId])
+}
+
+model SystemSetting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model UserRole {
@@ -303,4 +342,43 @@ model SaaFormApprovalStep {
   approvalStep SaaApprovalStep @relation(fields: [stepId], references: [id], onDelete: Cascade)
 
   @@unique([formConfigId, stepId])
+}
+
+// 6. FO Remittance Records
+model RemittanceRecord {
+  id            String   @id @default(cuid())
+  tanggal       String   // Format: YYYY-MM-DD
+  staffName     String
+  userId        String?
+  user          User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  shift         String   // Morning, Afternoon, Night
+  outlet        String   @default("FO")
+  
+  // Financial Summary
+  received      Float    @default(0)
+  paidOut       Float    @default(0)
+  net           Float    @default(0)
+  overage       Float    @default(0)
+  others        Float    @default(0)
+  amountToRemit Float    @default(0)
+  grandTotal    Float    @default(0)
+  totalEnclosed Float    @default(0)
+
+  // Bank Notes Denomination Qty
+  l100k         Int      @default(0)
+  l50k          Int      @default(0)
+  l20k          Int      @default(0)
+  l10k          Int      @default(0)
+  l5k           Int      @default(0)
+  l2k           Int      @default(0)
+  l1k           Int      @default(0)
+
+  // Coins Denomination Qty
+  k1k           Int      @default(0)
+  k500          Int      @default(0)
+  k200          Int      @default(0)
+  k100          Int      @default(0)
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }

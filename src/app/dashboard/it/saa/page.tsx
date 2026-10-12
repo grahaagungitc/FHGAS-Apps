@@ -104,7 +104,7 @@ export default function SaaListPage() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6">
+    <div className="w-full space-y-6">
       {/* Header & CTA Button */}
       <div className="bg-white border border-slate-100 rounded-3xl p-6 shadow-soft flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
@@ -195,7 +195,7 @@ export default function SaaListPage() {
                 {filteredRequests.map((req) => (
                   <tr key={req.id} className="hover:bg-slate-50/60 transition">
                     <td className="p-4 pl-6 font-bold text-[#5C61F4]">
-                      #{req.ticketNumber || req.id.substring(0, 8).toUpperCase()}
+                      {req.ticketNumber.startsWith("#") ? req.ticketNumber : `#${req.ticketNumber}`}
                     </td>
                     <td className="p-4">
                       <span className="font-bold text-slate-800 block">

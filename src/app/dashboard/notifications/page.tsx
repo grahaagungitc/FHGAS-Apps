@@ -49,7 +49,7 @@ export default function NotificationsPage() {
   };
 
   return (
-    <section className="mx-auto max-w-4xl space-y-6">
+    <section className="w-full space-y-6">
       <header className="flex flex-wrap items-center justify-between gap-4 bg-white border border-slate-100 p-6 rounded-3xl shadow-soft">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center text-[#5C61F4] shrink-0">

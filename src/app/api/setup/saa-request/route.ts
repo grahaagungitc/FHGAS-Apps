@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { SaaRequestError, submitSaaRequest } from "@/lib/saa";
+import { formatHelpDeskTicket } from "@/lib/saa-number";
 
 type SessionUser = {
   id?: string;
@@ -28,7 +29,7 @@ export async function GET() {
   return NextResponse.json(
     requests.map((request) => ({
       id: request.id,
-      ticketNumber: request.id,
+      ticketNumber: formatHelpDeskTicket(request.id),
       requesterName: request.name,
       requesterEmail: request.email,
       formConfig: request.formConfig

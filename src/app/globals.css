@@ -2,16 +2,31 @@
 @tailwind components;
 @tailwind utilities;
 
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&family=Roboto:wght@400;500;700;900&family=Montserrat:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap');
+
 :root {
   --background: #F8FAFC;
   --foreground: #0F172A;
+  --primary-color: #5C61F4;
+  --primary-hover: #4F46E5;
+  --bg-color: #F8FAFC;
+  --card-bg: #FFFFFF;
+  --text-color: #0F172A;
+  --header-font: 'Inter';
+  --body-font: 'Inter';
+  --code-font: 'JetBrains Mono';
+  --border-radius: 1.5rem;
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  color: var(--text-color, var(--foreground));
+  background: var(--bg-color, var(--background));
+  font-family: var(--body-font, system-ui), -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--header-font, inherit), sans-serif;
 }
 
 /* Floating Label helper styles */

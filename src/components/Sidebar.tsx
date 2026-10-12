@@ -16,9 +16,13 @@ import {
   FileSignature,
   Activity,
   SlidersHorizontal,
+  Receipt,
+  Palette,
   X,
   type LucideIcon,
 } from "lucide-react";
+
+import { useTheme } from "@/context/ThemeContext";
 
 interface SidebarProps {
   user: {
@@ -34,6 +38,7 @@ interface SidebarProps {
 
 export default function Sidebar({ user, signOutAction, isOpen = false, onClose }: SidebarProps) {
   const pathname = usePathname();
+  const { theme } = useTheme();
 
   // State Toggle Dropdown
   const [openDept, setOpenDept] = useState(true);
@@ -110,23 +115,38 @@ export default function Sidebar({ user, signOutAction, isOpen = false, onClose }
 
       {/* Sidebar Drawer Container */}
       <aside
-        className={`w-72 bg-white border-r border-slate-100 flex flex-col justify-between h-screen fixed lg:sticky top-0 left-0 text-slate-800 font-sans shadow-xl lg:shadow-sm z-50 transform transition-transform duration-300 ease-in-out ${
+        style={{ fontFamily: `'${theme.bodyFont}', system-ui, sans-serif` }}
+        className={`w-72 bg-white border-r border-slate-100 flex flex-col justify-between h-screen fixed lg:sticky top-0 left-0 text-slate-800 shadow-xl lg:shadow-sm z-50 transform transition-transform duration-300 ease-in-out ${
           isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         }`}
       >
-        <div className="overflow-y-auto flex-1">
+        <div className="overflow-y-auto flex-1 pb-6">
           {/* Brand Header */}
           <div className="p-6 border-b border-slate-100 flex items-center justify-between sticky top-0 bg-white z-10">
             <div className="flex items-center gap-3.5">
-              <div className="w-10 h-10 bg-[#5C61F4] rounded-2xl flex items-center justify-center text-white shadow-soft">
-                <ShieldCheck className="w-5 h-5 text-white" />
+              <div
+                className="w-10 h-10 rounded-2xl flex items-center justify-center text-white shadow-soft shrink-0 overflow-hidden"
+                style={{ backgroundColor: theme.primaryColor }}
+              >
+                {theme.logoUrl ? (
+                  <img
+                    src={theme.logoUrl}
+                    alt={theme.appName}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <ShieldCheck className="w-5 h-5 text-white" />
+                )}
               </div>
-              <div>
-                <h1 className="font-extrabold text-slate-900 text-lg leading-tight tracking-tight">
-                  HMS CORE
+              <div className="min-w-0">
+                <h1
+                  style={{ fontFamily: `'${theme.headerFont}', system-ui, sans-serif` }}
+                  className="font-extrabold text-slate-900 text-lg leading-tight tracking-tight truncate"
+                >
+                  {theme.appName || "FHGAS Portal"}
                 </h1>
-                <p className="text-[11px] font-semibold text-slate-400 mt-0.5">
-                  SAA PROTOCOL V1.0
+                <p className="text-[11px] font-semibold text-slate-400 mt-0.5 truncate">
+                  {theme.appSubtitle || "Management System"}
                 </p>
               </div>
             </div>
@@ -275,6 +295,32 @@ export default function Sidebar({ user, signOutAction, isOpen = false, onClose }
                     <span>User Management</span>
                   </Link>
 
+                  <Link
+                    href="/dashboard/setup/roles"
+                    onClick={handleLinkClick}
+                    className={`flex items-center gap-2 px-2.5 py-2 rounded-lg font-medium transition-all ${
+                      pathname === "/dashboard/setup/roles"
+                        ? "bg-indigo-50 text-[#5C61F4] font-bold"
+                        : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+                    }`}
+                  >
+                    <ShieldCheck className="w-3.5 h-3.5" />
+                    <span>Roles & Permissions</span>
+                  </Link>
+
+                  <Link
+                    href="/dashboard/setup/theme"
+                    onClick={handleLinkClick}
+                    className={`flex items-center gap-2 px-2.5 py-2 rounded-lg font-medium transition-all ${
+                      pathname === "/dashboard/setup/theme"
+                        ? "bg-indigo-50 text-[#5C61F4] font-bold"
+                        : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+                    }`}
+                  >
+                    <Palette className="w-3.5 h-3.5" />
+                    <span>UI & Branding</span>
+                  </Link>
+
                   {user.systemRole === "ADMIN" && (
                     <Link
                       href="/dashboard/setup/access-requests"
@@ -319,33 +365,6 @@ export default function Sidebar({ user, signOutAction, isOpen = false, onClose }
               )}
             </div>
           </nav>
-        </div>
-
-        {/* User Info Footer */}
-        <div className="p-4 border-t border-slate-100 bg-slate-50/50 sticky bottom-0">
-          <div className="mb-3 px-1 flex items-center justify-between">
-            <div className="truncate mr-2">
-              <p className="text-xs font-bold text-slate-800 truncate">
-                {user.name || "User"}
-              </p>
-              <p className="text-[10px] text-slate-400 truncate">
-                {user.email}
-              </p>
-            </div>
-            <span className="px-2 py-0.5 bg-indigo-50 text-[#5C61F4] text-[10px] font-bold rounded-md border border-indigo-100 shrink-0">
-              {user.systemRole || "STAFF"}
-            </span>
-          </div>
-
-          <form action={signOutAction}>
-            <button
-              type="submit"
-              className="w-full flex items-center justify-center gap-2 py-2.5 px-3 bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold text-xs rounded-xl border border-rose-200 transition-all active:scale-[0.99]"
-            >
-              <LogOut className="w-3.5 h-3.5" />
-              <span>SIGN OUT</span>
-            </button>
-          </form>
         </div>
       </aside>
     </>
