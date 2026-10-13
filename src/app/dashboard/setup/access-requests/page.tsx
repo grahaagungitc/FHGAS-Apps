@@ -48,7 +48,6 @@ export default function AccessRequestsPage() {
   const [processingId, setProcessingId] = useState("");
   const [error, setError] = useState("");
 
-  // State untuk Modal Pilih Role
   const [activeModalRequestId, setActiveModalRequestId] = useState<string | null>(null);
   const [roleSearchQuery, setRoleSearchQuery] = useState("");
   const [tempSelectedRoles, setTempSelectedRoles] = useState<string[]>([]);
@@ -89,7 +88,7 @@ export default function AccessRequestsPage() {
                 ? request.requestedDepartmentId || ""
                 : departmentData[0]?.id || "",
               position: "",
-              roles: ["STAFF"], // Default initial role
+              roles: ["STAFF"],
             };
           }
           return next;
@@ -144,7 +143,6 @@ export default function AccessRequestsPage() {
     }
   };
 
-  // Modal handlers
   const handleOpenRoleModal = (requestId: string) => {
     const currentRoles = assignments[requestId]?.roles || [];
     setTempSelectedRoles([...currentRoles]);
@@ -167,8 +165,8 @@ export default function AccessRequestsPage() {
     );
   };
 
-  const toggleSelectAllRoles = (filteredRoles: SystemRole[]) => {
-    const filteredCodes = filteredRoles.map((r) => r.code);
+  const toggleSelectAllRoles = (filteredRolesList: SystemRole[]) => {
+    const filteredCodes = filteredRolesList.map((r) => r.code);
     const allSelected = filteredCodes.every((code) => tempSelectedRoles.includes(code));
 
     if (allSelected) {
@@ -185,7 +183,6 @@ export default function AccessRequestsPage() {
     });
   };
 
-  // Filtered roles for search in modal
   const filteredRoles = roles.filter(
     (role) =>
       role.name.toLowerCase().includes(roleSearchQuery.toLowerCase()) ||
@@ -268,7 +265,6 @@ export default function AccessRequestsPage() {
                   </label>
                 </div>
 
-                {/* ROLE MANAGEMENT SECTION - Mengadopsi Tampilan Gambar Reference */}
                 <div className="border border-slate-100 rounded-2xl p-4 bg-slate-50/50 space-y-3">
                   <div className="flex items-center justify-between border-b border-slate-200 pb-2">
                     <div>
@@ -287,9 +283,10 @@ export default function AccessRequestsPage() {
                     </button>
                   </div>
 
-                  {/* List Role yang Terpilih */}
                   {selectedRolesData.length === 0 ? (
-                    <p className="text-xs text-slate-400 italic py-2">Belum ada role yang dipilih. Klik tombol "+ Add / Edit Role" di atas.</p>
+                    <p className="text-xs text-slate-400 italic py-2">
+                      Belum ada role yang dipilih. Klik tombol &quot;+ Add / Edit Role&quot; di atas.
+                    </p>
                   ) : (
                     <div className="bg-white border border-slate-200 rounded-xl overflow-hidden divide-y divide-slate-100">
                       <div className="bg-slate-50 px-4 py-2 text-[11px] font-bold text-slate-500 uppercase tracking-wider flex justify-between">
@@ -336,11 +333,9 @@ export default function AccessRequestsPage() {
         </div>
       )}
 
-      {/* MODAL: CHOOSE ROLE (Sesuai Desain image_a70415.png) */}
       {activeModalRequestId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-xs">
           <div className="w-full max-w-2xl bg-white rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] border border-slate-200">
-            {/* Header Modal Warna Biru Khas / Cyan */}
             <div className="bg-[#0092BA] text-white px-6 py-3.5 flex items-center justify-between shrink-0">
               <h3 className="font-extrabold text-base tracking-wide">Choose Role</h3>
               <button
@@ -352,7 +347,6 @@ export default function AccessRequestsPage() {
               </button>
             </div>
 
-            {/* Sub Header & Search Bar */}
             <div className="p-4 border-b border-slate-200 bg-white flex items-center justify-between gap-4 shrink-0">
               <div className="relative flex-1">
                 <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -377,7 +371,6 @@ export default function AccessRequestsPage() {
               </div>
             </div>
 
-            {/* List Table Role */}
             <div className="overflow-y-auto flex-1 divide-y divide-slate-100">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
@@ -418,7 +411,7 @@ export default function AccessRequestsPage() {
                             <input
                               type="checkbox"
                               checked={isChecked}
-                              onChange={() => {}} // Diset di level row onClick
+                              onChange={() => {}}
                               className="h-4 w-4 rounded border-slate-300 text-[#0092BA] focus:ring-[#0092BA] cursor-pointer"
                             />
                           </td>
@@ -433,7 +426,6 @@ export default function AccessRequestsPage() {
               </table>
             </div>
 
-            {/* Footer Modal */}
             <div className="p-4 border-t border-slate-200 bg-slate-50 flex items-center justify-between shrink-0">
               <span className="text-xs font-semibold text-slate-500">
                 1 - {filteredRoles.length} of {roles.length}
@@ -461,4 +453,4 @@ export default function AccessRequestsPage() {
       )}
     </section>
   );
-} 
+}
