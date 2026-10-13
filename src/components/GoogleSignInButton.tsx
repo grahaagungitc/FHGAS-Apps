@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { signIn } from "next-auth/react";
+import { useTheme } from "@/context/ThemeContext";
 
 interface GoogleSignInButtonProps {
   label?: string;
@@ -11,13 +12,14 @@ interface GoogleSignInButtonProps {
 export default function GoogleSignInButton({ label = "Google", mode = "login" }: GoogleSignInButtonProps) {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
+  const { theme } = useTheme();
 
   const handleSignIn = async () => {
     setPending(true);
     setError("");
     try {
       if (mode === "signup") {
-        await signIn("google", { callbackUrl: "/login?signup=true" });
+        await signIn("google", { callbackUrl: "/signup/complete" });
       } else {
         await signIn("google", { callbackUrl: "/dashboard" });
       }
@@ -35,7 +37,8 @@ export default function GoogleSignInButton({ label = "Google", mode = "login" }:
         type="button"
         onClick={handleSignIn}
         disabled={pending}
-        className="w-full flex items-center justify-center gap-3 py-3.5 px-4 bg-white hover:bg-slate-50 text-slate-700 font-semibold rounded-2xl border border-slate-200 shadow-sm transition-all hover:border-slate-300 active:scale-[0.99] disabled:opacity-60"
+        style={{ backgroundColor: theme.primaryColor || "#5C61F4", borderColor: theme.primaryColor || "#5C61F4" }}
+        className="google-auth-button flex w-full items-center justify-center gap-3 rounded-lg border px-4 py-3.5 font-semibold text-white shadow-sm transition-all active:scale-[0.99] disabled:opacity-60"
       >
         <svg className="w-5 h-5" viewBox="0 0 24 24" aria-hidden="true">
           <path

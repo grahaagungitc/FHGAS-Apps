@@ -19,6 +19,7 @@ import {
   FolderPlus,
   Info,
 } from "lucide-react";
+import { useAppNotifications } from "@/components/AppNotificationProvider";
 
 interface SystemRole {
   id: string;
@@ -56,6 +57,7 @@ const ACCESS_LEVELS = [
 ] as const;
 
 export default function RolesPermissionsPage() {
+  const { notify, confirmAction } = useAppNotifications();
   const [roles, setRoles] = useState<SystemRole[]>([]);
   const [modules, setModules] = useState<AppModule[]>([]);
   // Key: `${roleId}_${moduleId}` => { accessLevel, canApprove }
@@ -203,7 +205,7 @@ export default function RolesPermissionsPage() {
       }
 
       if (permissionsToSave.length === 0) {
-        alert("Tidak ada perubahan yang perlu disimpan.");
+        notify("Tidak ada perubahan yang perlu disimpan.", "info");
         setSaving(false);
         return;
       }
@@ -215,15 +217,15 @@ export default function RolesPermissionsPage() {
       });
 
       if (res.ok) {
-        alert("Konfigurasi Hak Akses & Matriks Permission berhasil disimpan!");
+        notify("Konfigurasi Hak Akses & Matriks Permission berhasil disimpan!", "success");
         setInitialMatrix(JSON.parse(JSON.stringify(matrix)));
       } else {
         const err = await res.json();
-        alert(`Gagal menyimpan: ${err.message || "Terjadi kesalahan"}`);
+        notify(`Gagal menyimpan: ${err.message || "Terjadi kesalahan"}`, "error");
       }
     } catch (err) {
       console.error(err);
-      alert("Gagal menghubungi server.");
+      notify("Gagal menghubungi server.", "error");
     } finally {
       setSaving(false);
     }
@@ -259,29 +261,31 @@ export default function RolesPermissionsPage() {
       if (res.ok) {
         setIsRoleModalOpen(false);
         fetchData();
+        notify(editingRole ? "Role berhasil diperbarui." : "Role berhasil ditambahkan.", "success");
       } else {
         const err = await res.json();
-        alert(`Gagal: ${err.message}`);
+        notify(`Gagal: ${err.message}`, "error");
       }
     } catch (err) {
       console.error(err);
-      alert("Terjadi kesalahan.");
+      notify("Terjadi kesalahan.", "error");
     }
   };
 
   const handleDeleteRole = async (id: string, name: string) => {
-    if (!confirm(`Apakah Anda yakin ingin menghapus role "${name}"?`)) return;
+    if (!(await confirmAction(`Apakah Anda yakin ingin menghapus role "${name}"?`))) return;
     try {
       const res = await fetch(`/api/setup/saa-roles?id=${id}`, { method: "DELETE" });
       if (res.ok) {
         fetchData();
+        notify("Role berhasil dihapus.", "success");
       } else {
         const err = await res.json();
-        alert(`Gagal: ${err.message}`);
+        notify(`Gagal: ${err.message}`, "error");
       }
     } catch (err) {
       console.error(err);
-      alert("Terjadi kesalahan.");
+      notify("Terjadi kesalahan.", "error");
     }
   };
 
@@ -326,18 +330,19 @@ export default function RolesPermissionsPage() {
       if (res.ok) {
         setIsModuleModalOpen(false);
         fetchData();
+        notify(editingModule ? "Module berhasil diperbarui." : "Module berhasil ditambahkan.", "success");
       } else {
         const err = await res.json();
-        alert(`Gagal: ${err.message}`);
+        notify(`Gagal: ${err.message}`, "error");
       }
     } catch (err) {
       console.error(err);
-      alert("Terjadi kesalahan.");
+      notify("Terjadi kesalahan.", "error");
     }
   };
 
   const handleDeleteModule = async (id: string, name: string) => {
-    if (!confirm(`Apakah Anda yakin ingin menghapus modul "${name}"?`)) return;
+    if (!(await confirmAction(`Apakah Anda yakin ingin menghapus modul "${name}"?`))) return;
     try {
       const res = await fetch("/api/setup/roles-permissions", {
         method: "POST",
@@ -346,13 +351,14 @@ export default function RolesPermissionsPage() {
       });
       if (res.ok) {
         fetchData();
+        notify("Module berhasil dihapus.", "success");
       } else {
         const err = await res.json();
-        alert(`Gagal: ${err.message}`);
+        notify(`Gagal: ${err.message}`, "error");
       }
     } catch (err) {
       console.error(err);
-      alert("Terjadi kesalahan.");
+      notify("Terjadi kesalahan.", "error");
     }
   };
 
@@ -450,7 +456,7 @@ export default function RolesPermissionsPage() {
         <div className="space-y-4 w-full">
           {/* Filter Bar */}
           <div className="bg-white border border-slate-100 p-4 rounded-3xl shadow-soft flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-3 flex-1 min-w-[280px]">
+            <div className="flex w-full min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:flex-1 sm:min-w-[280px]">
               <div className="relative flex-1">
                 <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
@@ -464,7 +470,7 @@ export default function RolesPermissionsPage() {
               <select
                 value={categoryFilter}
                 onChange={(e) => setCategoryFilter(e.target.value)}
-                className="px-3.5 py-2 border border-slate-200 rounded-2xl text-xs font-bold text-slate-700 bg-white focus:outline-none cursor-pointer"
+                className="w-full min-w-0 px-3.5 py-2 border border-slate-200 rounded-2xl text-xs font-bold text-slate-700 bg-white focus:outline-none cursor-pointer sm:w-auto"
               >
                 <option value="ALL">Semua Kategori ({categories.length})</option>
                 {categories.map((c) => (
@@ -489,13 +495,16 @@ export default function RolesPermissionsPage() {
 
           {/* Matrix Table with Drag-to-Scroll Container */}
           <div className="bg-white border border-slate-100 rounded-3xl shadow-soft overflow-hidden w-full">
+            <p className="px-4 pt-3 text-[11px] font-medium text-slate-500 sm:hidden">
+              Geser matrix ke samping untuk membandingkan role lainnya.
+            </p>
             <div
               ref={scrollContainerRef}
               onMouseDown={handleMouseDown}
               onMouseMove={handleMouseMove}
               onMouseUp={handleMouseUpOrLeave}
               onMouseLeave={handleMouseUpOrLeave}
-              className="overflow-x-auto select-none cursor-grab active:cursor-grabbing transition-colors"
+              className="max-w-full touch-pan-x overscroll-x-contain overflow-x-auto select-none cursor-grab active:cursor-grabbing transition-colors"
             >
               <table className="w-full text-left border-collapse min-w-max">
                 <thead>
@@ -750,8 +759,8 @@ export default function RolesPermissionsPage() {
 
       {/* MODAL ROLE */}
       {isRoleModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
-          <div className="w-full max-w-md bg-white border border-slate-100 rounded-3xl p-6 shadow-soft space-y-4">
+        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-900/40 p-3 backdrop-blur-sm sm:items-center sm:p-4">
+          <div className="my-auto max-h-[calc(100dvh-1.5rem)] w-full max-w-md space-y-4 overflow-y-auto rounded-2xl border border-slate-100 bg-white p-4 shadow-soft sm:rounded-3xl sm:p-6">
             <h3 className="font-extrabold text-base text-slate-800 border-b border-slate-100 pb-3">
               {editingRole ? "Edit Role" : "Tambah Role Baru"}
             </h3>
@@ -797,7 +806,7 @@ export default function RolesPermissionsPage() {
                 />
               </div>
 
-              <div className="flex justify-end gap-2 border-t border-slate-100 pt-4">
+              <div className="flex flex-col-reverse gap-2 border-t border-slate-100 pt-4 sm:flex-row sm:justify-end">
                 <button
                   type="button"
                   onClick={() => setIsRoleModalOpen(false)}
@@ -819,8 +828,8 @@ export default function RolesPermissionsPage() {
 
       {/* MODAL MODULE */}
       {isModuleModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
-          <div className="w-full max-w-md bg-white border border-slate-100 rounded-3xl p-6 shadow-soft space-y-4">
+        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-900/40 p-3 backdrop-blur-sm sm:items-center sm:p-4">
+          <div className="my-auto max-h-[calc(100dvh-1.5rem)] w-full max-w-md space-y-4 overflow-y-auto rounded-2xl border border-slate-100 bg-white p-4 shadow-soft sm:rounded-3xl sm:p-6">
             <h3 className="font-extrabold text-base text-slate-800 border-b border-slate-100 pb-3">
               {editingModule ? "Edit Modul Sistem" : "Tambah Modul / Menu Baru"}
             </h3>
@@ -889,7 +898,7 @@ export default function RolesPermissionsPage() {
                 />
               </div>
 
-              <div className="flex justify-end gap-2 border-t border-slate-100 pt-4">
+              <div className="flex flex-col-reverse gap-2 border-t border-slate-100 pt-4 sm:flex-row sm:justify-end">
                 <button
                   type="button"
                   onClick={() => setIsModuleModalOpen(false)}

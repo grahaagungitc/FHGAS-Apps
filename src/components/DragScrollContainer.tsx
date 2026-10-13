@@ -77,7 +77,10 @@ export default function DragScrollContainer({
   return (
     <div
       ref={scrollRef}
-      className={`overflow-x-auto select-none cursor-grab active:cursor-grabbing ${className}`}
+      role="region"
+      aria-label="Tabel dapat digeser secara horizontal"
+      tabIndex={0}
+      className={`max-w-full touch-pan-x overscroll-x-contain overflow-x-auto select-none cursor-grab active:cursor-grabbing ${className}`}
     >
       {children}
     </div>

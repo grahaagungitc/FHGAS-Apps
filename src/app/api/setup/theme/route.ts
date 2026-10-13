@@ -5,6 +5,8 @@ const DEFAULT_THEME = {
   appName: "FHGAS Portal",
   appSubtitle: "Management System",
   logoUrl: "", // Empty means default ShieldCheck icon
+  loginBackgroundUrl: "",
+  mobileLoginBackgroundUrl: "",
   primaryColor: "#5C61F4", // Brand primary color
   primaryHover: "#4F46E5",
   accentColor: "#FFB800", // Accent color for highlights/badges

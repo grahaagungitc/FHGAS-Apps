@@ -12,6 +12,8 @@ export interface ThemeConfig {
   appName: string;
   appSubtitle: string;
   logoUrl: string;
+  loginBackgroundUrl: string;
+  mobileLoginBackgroundUrl: string;
   primaryColor: string;
   primaryHover: string;
   accentColor: string;
@@ -31,6 +33,8 @@ const defaultTheme: ThemeConfig = {
   appName: "FHGAS Portal",
   appSubtitle: "Management System",
   logoUrl: "",
+  loginBackgroundUrl: "",
+  mobileLoginBackgroundUrl: "",
   primaryColor: "#5C61F4",
   primaryHover: "#4F46E5",
   accentColor: "#FFB800",
@@ -91,6 +95,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
     root.style.setProperty("--primary-color", t.primaryColor);
     root.style.setProperty("--primary-hover", t.primaryHover);
+    root.style.setProperty("--primary-soft", `color-mix(in srgb, ${t.primaryColor} 10%, white)`);
     root.style.setProperty("--accent-color", t.accentColor || "#FFB800");
     root.style.setProperty("--bg-color", t.backgroundColor);
     root.style.setProperty("--card-bg", t.cardBgColor);

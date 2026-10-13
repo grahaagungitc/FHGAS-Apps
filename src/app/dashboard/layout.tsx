@@ -1,6 +1,7 @@
 import { auth, signOut } from "@/auth";
 import { redirect } from "next/navigation";
 import DashboardShell from "@/components/DashboardShell";
+import { getUserModuleAccess } from "@/lib/module-access";
 
 export default async function DashboardLayout({
   children,
@@ -12,6 +13,8 @@ export default async function DashboardLayout({
   if (!session) {
     redirect("/login");
   }
+
+  const moduleAccess = await getUserModuleAccess(session.user?.email);
 
   const handleSignOut = async () => {
     "use server";
@@ -25,6 +28,8 @@ export default async function DashboardLayout({
         email: session.user?.email,
         systemRole: (session.user as any)?.systemRole,
         isIT: (session.user as any)?.isIT,
+        moduleCodes: moduleAccess.moduleCodes,
+        isFOLeader: moduleAccess.isFOLeader,
       }}
       signOutAction={handleSignOut}
     >

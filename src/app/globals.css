@@ -16,6 +16,40 @@
   --body-font: 'Inter';
   --code-font: 'JetBrains Mono';
   --border-radius: 1.5rem;
+  --primary-soft: #EEF2FF;
+}
+
+@layer utilities {
+  .bg-\[\#5C61F4\],
+  .bg-indigo-600 {
+    background-color: var(--primary-color) !important;
+  }
+
+  .hover\:bg-indigo-600:hover {
+    background-color: var(--primary-hover) !important;
+  }
+
+  .text-\[\#5C61F4\],
+  .text-indigo-600,
+  .text-indigo-700 {
+    color: var(--primary-color) !important;
+  }
+
+  .bg-indigo-50 {
+    background-color: var(--primary-soft) !important;
+  }
+
+  .border-indigo-100 {
+    border-color: color-mix(in srgb, var(--primary-color) 22%, white) !important;
+  }
+
+  .accent-indigo-600 {
+    accent-color: var(--primary-color) !important;
+  }
+}
+
+.google-auth-button:hover {
+  filter: brightness(0.92);
 }
 
 body {
@@ -23,6 +57,19 @@ body {
   background: var(--bg-color, var(--background));
   font-family: var(--body-font, system-ui), -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
+}
+
+html,
+body {
+  max-width: 100%;
+  overflow-x: clip;
+}
+
+input,
+select,
+textarea,
+button {
+  max-width: 100%;
 }
 
 h1, h2, h3, h4, h5, h6 {

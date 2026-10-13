@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Plus, Trash2, Edit2, CheckCircle, XCircle, Settings2, ArrowUp, ArrowDown, Layers3 } from "lucide-react";
 import SaaMasterFieldsPage from "@/app/dashboard/setup/saa-fields/page";
+import { useAppNotifications } from "@/components/AppNotificationProvider";
 
 interface FieldConfig {
   id?: string;
@@ -59,6 +60,7 @@ function parseFieldOptions(rawOptions: unknown): string[] {
 }
 
 export default function SaaConfigPage() {
+  const { notify, confirmAction } = useAppNotifications();
   const [activeTab, setActiveTab] = useState<SetupTab>("forms");
   const [configs, setConfigs] = useState<SaaFormConfig[]>([]);
   const [selectedConfigId, setSelectedConfigId] = useState("");
@@ -157,10 +159,11 @@ export default function SaaConfigPage() {
     });
     if (!response.ok) {
       const result = await response.json();
-      alert(result.message || "Gagal menyimpan konfigurasi SAA.");
+      notify(result.message || "Gagal menyimpan konfigurasi SAA.", "error");
       return false;
     }
     await fetchConfigs();
+    notify("Konfigurasi SAA berhasil disimpan.", "success");
     return true;
   };
 
@@ -194,7 +197,7 @@ export default function SaaConfigPage() {
     const removedSection = sectionsDraft[index];
     const remaining = sectionsDraft.filter((_, sectionIndex) => sectionIndex !== index);
     if (remaining.length === 0 && sectionFieldsDraft.some((field) => field.section === removedSection)) {
-      alert("Tambahkan section lain atau pindahkan field sebelum menghapus section ini.");
+      notify("Tambahkan section lain atau pindahkan field sebelum menghapus section ini.", "warning");
       return;
     }
     setSectionsDraft(remaining);
@@ -207,11 +210,11 @@ export default function SaaConfigPage() {
     if (!selectedForm) return;
     const normalizedSections = sectionsDraft.map((section) => section.trim());
     if (normalizedSections.some((section) => !section) || new Set(normalizedSections).size !== normalizedSections.length) {
-      alert("Nama section wajib diisi dan harus unik.");
+      notify("Nama section wajib diisi dan harus unik.", "warning");
       return;
     }
     if (sectionFieldsDraft.some((field) => !normalizedSections.includes(field.section))) {
-      alert("Pindahkan setiap field ke section yang masih tersedia.");
+      notify("Pindahkan setiap field ke section yang masih tersedia.", "warning");
       return;
     }
     await saveFormConfiguration(selectedForm, {
@@ -254,7 +257,7 @@ export default function SaaConfigPage() {
   const saveRequestTypes = async () => {
     if (!selectedForm) return;
     if (requestTypeDrafts.some((field) => !field.label.trim() || field.options?.length === 0)) {
-      alert("Setiap Request Type harus memiliki label dan minimal satu pilihan.");
+      notify("Setiap Request Type harus memiliki label dan minimal satu pilihan.", "warning");
       return;
     }
     const retainedFields = selectedForm.fields.filter((field) => field.source !== "REQUEST_TYPE");
@@ -342,7 +345,7 @@ export default function SaaConfigPage() {
     const removedSection = sections[index];
     const remainingSections = sections.filter((_, sectionIndex) => sectionIndex !== index);
     if (fields.some((field) => field.section === removedSection) && remainingSections.length === 0) {
-      alert("Buat section lain atau pindahkan field sebelum menghapus section ini.");
+      notify("Buat section lain atau pindahkan field sebelum menghapus section ini.", "warning");
       return;
     }
     setFields(fields.map((field) =>
@@ -374,21 +377,21 @@ export default function SaaConfigPage() {
     e.preventDefault();
     const normalizedSections = sections.map((section) => section.trim());
     if (normalizedSections.some((section) => !section) || new Set(normalizedSections).size !== normalizedSections.length) {
-      alert("Nama section harus diisi dan tidak boleh duplikat.");
+      notify("Nama section harus diisi dan tidak boleh duplikat.", "warning");
       return;
     }
     if (fields.some((field) => !normalizedSections.includes(field.section.trim()))) {
-      alert("Tempatkan setiap field pada section yang tersedia.");
+      notify("Tempatkan setiap field pada section yang tersedia.", "warning");
       return;
     }
 
     if (fields.some((field) => !field.fieldKey.trim() || !field.label.trim() || !field.section.trim())) {
-      alert("Setiap field harus memiliki key, label, dan section.");
+      notify("Setiap field harus memiliki key, label, dan section.", "warning");
       return;
     }
     const fieldKeys = fields.map((field) => field.fieldKey.trim());
     if (new Set(fieldKeys).size !== fieldKeys.length) {
-      alert("Setiap field dalam satu form harus memiliki key yang unik.");
+      notify("Setiap field dalam satu form harus memiliki key yang unik.", "warning");
       return;
     }
 
@@ -397,7 +400,7 @@ export default function SaaConfigPage() {
       (source) => fields.filter((field) => field.source === source).length > 1
     );
     if (duplicateSource) {
-      alert(`Binding ${duplicateSource} hanya boleh digunakan satu kali dalam satu form.`);
+      notify(`Binding ${duplicateSource} hanya boleh digunakan satu kali dalam satu form.`, "warning");
       return;
     }
 
@@ -424,22 +427,22 @@ export default function SaaConfigPage() {
       });
 
       if (res.ok) {
-        alert(`Konfigurasi SAA berhasil ${isEdit ? "diperbarui" : "disimpan"}!`);
+        notify(`Konfigurasi SAA berhasil ${isEdit ? "diperbarui" : "disimpan"}!`, "success");
         setIsModalOpen(false);
         resetForm();
         fetchConfigs();
       } else {
         const errData = await res.json();
-        alert(`Gagal: ${errData.message}`);
+        notify(`Gagal: ${errData.message}`, "error");
       }
     } catch (err) {
-      alert("Terjadi kesalahan sistem saat menyimpan data.");
+      notify("Terjadi kesalahan sistem saat menyimpan data.", "error");
     }
   };
 
   const handleDelete = async (id?: string) => {
     if (!id) return;
-    if (!confirm("Apakah Anda yakin ingin menghapus konfigurasi ini?")) return;
+    if (!(await confirmAction("Apakah Anda yakin ingin menghapus konfigurasi ini?"))) return;
 
     try {
       const res = await fetch(`/api/setup/saa-config?id=${id}`, {
@@ -447,14 +450,14 @@ export default function SaaConfigPage() {
       });
 
       if (res.ok) {
-        alert("Konfigurasi berhasil dihapus.");
+        notify("Konfigurasi berhasil dihapus.", "success");
         fetchConfigs();
       } else {
         const errData = await res.json();
-        alert(`Gagal menghapus: ${errData.message}`);
+        notify(`Gagal menghapus: ${errData.message}`, "error");
       }
     } catch (err) {
-      alert("Terjadi kesalahan saat menghapus data.");
+      notify("Terjadi kesalahan saat menghapus data.", "error");
     }
   };
 
@@ -484,7 +487,7 @@ export default function SaaConfigPage() {
         )}
       </div>
 
-      <div className="flex gap-2 overflow-x-auto bg-white border border-slate-100 p-2 rounded-2xl shadow-soft">
+      <div className="flex max-w-full gap-2 overflow-x-auto overscroll-x-contain bg-white border border-slate-100 p-2 rounded-2xl shadow-soft">
         {([
           ["forms", `Form Types (${configs.length})`],
           ["fields", "Fields"],
@@ -659,8 +662,8 @@ export default function SaaConfigPage() {
 
       {/* Modal Modal (Create & Edit) */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-y-auto p-6 space-y-6 shadow-soft-lg border border-slate-100">
+        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-900/40 p-3 backdrop-blur-sm sm:items-center sm:p-4">
+          <div className="my-auto max-h-[calc(100dvh-1.5rem)] w-full max-w-4xl space-y-6 overflow-y-auto rounded-2xl border border-slate-100 bg-white p-4 shadow-soft-lg sm:rounded-3xl sm:p-6">
             <div className="flex justify-between items-center border-b border-slate-100 pb-4">
               <h2 className="text-base font-extrabold text-slate-800">
                 {editingId ? "Edit Konfigurasi SAA" : "Pengaturan Tipe SAA Baru"}
@@ -675,7 +678,7 @@ export default function SaaConfigPage() {
 
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Form Info Utama */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1.5">
                     KODE TIPE (Unik)
@@ -702,7 +705,7 @@ export default function SaaConfigPage() {
                     required
                   />
                 </div>
-                <div className="col-span-2">
+                <div className="col-span-1 sm:col-span-2">
                   <label className="block text-xs font-bold text-slate-700 mb-1.5">
                     DESKRIPSI
                   </label>
@@ -714,7 +717,7 @@ export default function SaaConfigPage() {
                     rows={2}
                   />
                 </div>
-                <div className="col-span-2 flex items-center gap-2">
+                <div className="col-span-1 flex items-center gap-2 sm:col-span-2">
                   <input
                     type="checkbox"
                     id="isActive"
@@ -802,7 +805,7 @@ export default function SaaConfigPage() {
                 {fields.map((field, idx) => (
                   <div
                     key={idx}
-                    className="p-3 border border-slate-100 rounded-2xl bg-slate-50 grid grid-cols-12 gap-2 items-center"
+                    className="grid grid-cols-1 items-center gap-2 rounded-2xl border border-slate-100 bg-slate-50 p-3 sm:grid-cols-12"
                   >
                     {/* Key */}
                     <input
@@ -814,7 +817,7 @@ export default function SaaConfigPage() {
                         updated[idx].fieldKey = e.target.value;
                         setFields(updated);
                       }}
-                      className="col-span-2 border border-slate-200 rounded-xl p-2 text-xs bg-white font-medium text-slate-800"
+                      className="col-span-1 min-w-0 border border-slate-200 rounded-xl p-2 text-xs bg-white font-medium text-slate-800 sm:col-span-2"
                       required
                     />
 
@@ -828,7 +831,7 @@ export default function SaaConfigPage() {
                         updated[idx].label = e.target.value;
                         setFields(updated);
                       }}
-                      className="col-span-2 border border-slate-200 rounded-xl p-2 text-xs bg-white font-medium text-slate-800"
+                      className="col-span-1 min-w-0 border border-slate-200 rounded-xl p-2 text-xs bg-white font-medium text-slate-800 sm:col-span-2"
                       required
                     />
 
@@ -840,7 +843,7 @@ export default function SaaConfigPage() {
                         updated[idx].fieldType = e.target.value as any;
                         setFields(updated);
                       }}
-                      className="col-span-2 border border-slate-200 rounded-xl p-2 text-xs bg-white font-medium text-slate-800"
+                      className="col-span-1 min-w-0 border border-slate-200 rounded-xl p-2 text-xs bg-white font-medium text-slate-800 sm:col-span-2"
                     >
                       <option value="TEXT">Input Text</option>
                       <option value="EMAIL">Input Email</option>
@@ -864,7 +867,7 @@ export default function SaaConfigPage() {
                         updated[idx].source = e.target.value;
                         setFields(updated);
                       }}
-                      className="col-span-2 border border-slate-200 rounded-xl p-2 text-xs bg-white font-semibold text-[#5C61F4]"
+                      className="col-span-1 min-w-0 border border-slate-200 rounded-xl p-2 text-xs bg-white font-semibold text-[#5C61F4] sm:col-span-2"
                     >
                       <option value="CUSTOM">Custom field</option>
                       <option value="REQUEST_TYPE">Request type</option>
@@ -882,7 +885,7 @@ export default function SaaConfigPage() {
                         updated[idx].section = e.target.value;
                         setFields(updated);
                       }}
-                      className="col-span-2 border border-slate-200 rounded-xl p-2 text-xs bg-white font-medium text-slate-800"
+                      className="col-span-1 min-w-0 border border-slate-200 rounded-xl p-2 text-xs bg-white font-medium text-slate-800 sm:col-span-2"
                       required
                     >
                       <option value="">Pilih section</option>
@@ -892,7 +895,7 @@ export default function SaaConfigPage() {
                     </select>
 
                     {/* Order & Remove */}
-                    <div className="col-span-2 flex items-center justify-end gap-1">
+                    <div className="col-span-1 flex items-center justify-end gap-1 sm:col-span-2">
                       <input
                         type="number"
                         value={field.order ?? idx + 1}
@@ -912,7 +915,7 @@ export default function SaaConfigPage() {
                         <Trash2 size={16} />
                       </button>
                     </div>
-                    <div className="col-span-12 flex flex-wrap items-center gap-3 pt-1">
+                    <div className="col-span-1 flex flex-wrap items-center gap-3 pt-1 sm:col-span-12">
                       {(field.fieldType === "SELECT" || field.fieldType === "RADIO") &&
                         field.source !== "DEPARTMENT" && (
                         <input
@@ -927,7 +930,7 @@ export default function SaaConfigPage() {
                             setFields(updated);
                           }}
                           placeholder="Choices, separated by commas"
-                          className="min-w-48 flex-1 border border-slate-200 rounded-xl p-2 text-xs bg-white"
+                          className="min-w-0 flex-1 border border-slate-200 rounded-xl p-2 text-xs bg-white sm:min-w-48"
                           required
                         />
                       )}
@@ -967,7 +970,7 @@ export default function SaaConfigPage() {
                 {approvalSteps.map((step, idx) => (
                   <div
                     key={idx}
-                    className="p-3 border border-slate-100 rounded-2xl bg-slate-50 flex items-center gap-3"
+                    className="flex flex-col items-stretch gap-3 rounded-2xl border border-slate-100 bg-slate-50 p-3 sm:flex-row sm:items-center"
                   >
                     <span className="text-xs font-bold w-12 text-slate-500">
                       Step {step.step}
@@ -979,7 +982,7 @@ export default function SaaConfigPage() {
                         updated[idx].role = e.target.value as any;
                         setApprovalSteps(updated);
                       }}
-                      className="border border-slate-200 rounded-xl p-2 text-xs bg-white flex-1 font-medium text-slate-800"
+                      className="w-full min-w-0 border border-slate-200 rounded-xl p-2 text-xs bg-white font-medium text-slate-800 sm:flex-1"
                     >
                       {approvalRoles.map((role) => (
                         <option key={role.id} value={role.code}>{role.name} ({role.code})</option>
@@ -994,7 +997,7 @@ export default function SaaConfigPage() {
                         updated[idx].label = e.target.value;
                         setApprovalSteps(updated);
                       }}
-                      className="border border-slate-200 rounded-xl p-2 text-xs bg-white flex-1 font-medium text-slate-800"
+                      className="w-full min-w-0 border border-slate-200 rounded-xl p-2 text-xs bg-white font-medium text-slate-800 sm:flex-1"
                     />
                     <button
                       type="button"
@@ -1008,7 +1011,7 @@ export default function SaaConfigPage() {
               </div>
 
               {/* Action Buttons */}
-              <div className="flex justify-end gap-3 border-t border-slate-100 pt-4">
+              <div className="flex flex-col-reverse gap-2 border-t border-slate-100 pt-4 sm:flex-row sm:justify-end sm:gap-3">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Plus, Edit2, Trash2, Database, CheckSquare, ShieldCheck, ListFilter } from "lucide-react";
+import { useAppNotifications } from "@/components/AppNotificationProvider";
 
 interface SaaFormConfigOption {
   id: string;
@@ -46,6 +47,7 @@ export default function SaaMasterFieldsPage({
   initialTab = "fields",
   showTabs = true,
 }: SaaMasterFieldsPageProps) {
+  const { notify, confirmAction } = useAppNotifications();
   const [activeTab, setActiveTab] = useState<MasterTab>(initialTab);
   const [fields, setFields] = useState<MasterField[]>([]);
   const [steps, setSteps] = useState<MasterStep[]>([]);
@@ -184,19 +186,30 @@ export default function SaaMasterFieldsPage({
       if (res.ok) {
         setIsFieldModalOpen(false);
         fetchData();
+        notify(editingId ? "Master field berhasil diperbarui." : "Master field berhasil disimpan.", "success");
       } else {
         const err = await res.json();
-        alert(`Gagal: ${err.message}`);
+        notify(`Gagal: ${err.message}`, "error");
       }
     } catch (err) {
-      alert("Terjadi kesalahan sistem saat menyimpan field.");
+      notify("Terjadi kesalahan sistem saat menyimpan field.", "error");
     }
   };
 
   const handleDeleteField = async (id: string) => {
-    if (!confirm("Hapus Master Field ini?")) return;
-    await fetch(`/api/setup/saa-fields?id=${id}`, { method: "DELETE" });
-    fetchData();
+    if (!(await confirmAction("Hapus Master Field ini?"))) return;
+    try {
+      const response = await fetch(`/api/setup/saa-fields?id=${id}`, { method: "DELETE" });
+      if (!response.ok) {
+        const error = await response.json().catch(() => null);
+        notify(error?.message || "Gagal menghapus Master Field.", "error");
+        return;
+      }
+      notify("Master Field berhasil dihapus.", "success");
+      fetchData();
+    } catch {
+      notify("Terjadi kesalahan saat menghapus Master Field.", "error");
+    }
   };
 
   // --- APPROVER HANDLERS ---
@@ -235,19 +248,30 @@ export default function SaaMasterFieldsPage({
       if (res.ok) {
         setIsStepModalOpen(false);
         fetchData();
+        notify(editingId ? "Approver step berhasil diperbarui." : "Approver step berhasil disimpan.", "success");
       } else {
         const err = await res.json();
-        alert(`Gagal: ${err.message}`);
+        notify(`Gagal: ${err.message}`, "error");
       }
     } catch (err) {
-      alert("Terjadi kesalahan sistem saat menyimpan approver step.");
+      notify("Terjadi kesalahan sistem saat menyimpan approver step.", "error");
     }
   };
 
   const handleDeleteStep = async (id: string) => {
-    if (!confirm("Hapus Master Approver Step ini?")) return;
-    await fetch(`/api/setup/saa-steps?id=${id}`, { method: "DELETE" });
-    fetchData();
+    if (!(await confirmAction("Hapus Master Approver Step ini?"))) return;
+    try {
+      const response = await fetch(`/api/setup/saa-steps?id=${id}`, { method: "DELETE" });
+      if (!response.ok) {
+        const error = await response.json().catch(() => null);
+        notify(error?.message || "Gagal menghapus approver step.", "error");
+        return;
+      }
+      notify("Approver step berhasil dihapus.", "success");
+      fetchData();
+    } catch {
+      notify("Terjadi kesalahan saat menghapus approver step.", "error");
+    }
   };
 
   const handleOpenRoleModal = (role?: RoleOption) => {
@@ -272,22 +296,24 @@ export default function SaaMasterFieldsPage({
     });
     if (!response.ok) {
       const result = await response.json();
-      alert(result.message || "Gagal menyimpan role.");
+      notify(result.message || "Gagal menyimpan role.", "error");
       return;
     }
     setIsRoleModalOpen(false);
     fetchData();
+    notify(editingId ? "Role SAA berhasil diperbarui." : "Role SAA berhasil disimpan.", "success");
   };
 
   const handleDeleteRole = async (role: RoleOption) => {
-    if (!confirm(`Hapus role ${role.code}?`)) return;
+    if (!(await confirmAction(`Hapus role ${role.code}?`))) return;
     const response = await fetch(`/api/setup/saa-roles?id=${role.id}`, { method: "DELETE" });
     if (!response.ok) {
       const result = await response.json();
-      alert(result.message || "Gagal menghapus role.");
+      notify(result.message || "Gagal menghapus role.", "error");
       return;
     }
     fetchData();
+    notify("Role SAA berhasil dihapus.", "success");
   };
 
   return (
@@ -324,7 +350,7 @@ export default function SaaMasterFieldsPage({
       )}
 
       {showTabs && (
-        <div className="flex gap-2 overflow-x-auto bg-white border border-slate-100 p-2 rounded-2xl shadow-soft">
+        <div className="flex max-w-full gap-2 overflow-x-auto overscroll-x-contain bg-white border border-slate-100 p-2 rounded-2xl shadow-soft">
           <button onClick={() => setActiveTab("fields")} className={`px-4 py-2 text-xs font-bold rounded-xl transition-all flex items-center gap-2 ${activeTab === "fields" ? "bg-[#5C61F4] text-white shadow-soft" : "text-slate-500 hover:text-slate-800 hover:bg-slate-50"}`}>
             <ListFilter size={16} /> Master Fields ({fields.length})
           </button>
@@ -358,7 +384,9 @@ export default function SaaMasterFieldsPage({
       {/* TAB 1: MASTER FIELDS TABLE */}
       {activeTab === "fields" && (
         <div className="bg-white border border-slate-100 rounded-3xl shadow-soft overflow-hidden">
-          <table className="w-full text-left border-collapse">
+          <div className="max-w-full overflow-x-auto overscroll-x-contain">
+          <p className="px-4 pt-3 text-[11px] font-medium text-slate-500 sm:hidden">Geser tabel ke samping untuk melihat kolom lainnya.</p>
+          <table className="w-full min-w-[760px] text-left border-collapse lg:min-w-full">
             <thead>
               <tr className="bg-slate-50 text-slate-500 text-xs font-bold uppercase tracking-wider border-b border-slate-100">
                 <th className="p-4 pl-6">Key ID</th>
@@ -430,13 +458,16 @@ export default function SaaMasterFieldsPage({
               )}
             </tbody>
           </table>
+          </div>
         </div>
       )}
 
       {/* TAB 2: MASTER APPROVERS TABLE */}
       {activeTab === "approvers" && (
         <div className="bg-white border border-slate-100 rounded-3xl shadow-soft overflow-hidden">
-          <table className="w-full text-left border-collapse">
+          <div className="max-w-full overflow-x-auto overscroll-x-contain">
+          <p className="px-4 pt-3 text-[11px] font-medium text-slate-500 sm:hidden">Geser tabel ke samping untuk melihat kolom lainnya.</p>
+          <table className="w-full min-w-[640px] text-left border-collapse lg:min-w-full">
             <thead>
               <tr className="bg-slate-50 text-slate-500 text-xs font-bold uppercase tracking-wider border-b border-slate-100">
                 <th className="p-4 pl-6">Role Code</th>
@@ -500,12 +531,15 @@ export default function SaaMasterFieldsPage({
               )}
             </tbody>
           </table>
+          </div>
         </div>
       )}
 
       {activeTab === "roles" && (
         <div className="bg-white border border-slate-100 rounded-3xl shadow-soft overflow-hidden">
-          <table className="w-full text-left border-collapse">
+          <div className="max-w-full overflow-x-auto overscroll-x-contain">
+          <p className="px-4 pt-3 text-[11px] font-medium text-slate-500 sm:hidden">Geser tabel ke samping untuk melihat kolom lainnya.</p>
+          <table className="w-full min-w-[640px] text-left border-collapse lg:min-w-full">
             <thead>
               <tr className="bg-slate-50 text-slate-500 text-xs font-bold uppercase tracking-wider border-b border-slate-100">
                 <th className="p-4 pl-6">Role Code</th>
@@ -536,13 +570,14 @@ export default function SaaMasterFieldsPage({
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       )}
 
       {/* MODAL 1: FIELD FORM */}
       {isFieldModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-100 rounded-3xl max-w-lg w-full p-6 space-y-5 shadow-soft-lg">
+        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-900/40 p-3 backdrop-blur-sm sm:items-center sm:p-4">
+          <div className="my-auto max-h-[calc(100dvh-1.5rem)] w-full max-w-lg space-y-5 overflow-y-auto rounded-2xl border border-slate-100 bg-white p-4 shadow-soft-lg sm:rounded-3xl sm:p-6">
             <h2 className="text-base font-extrabold text-slate-800 border-b border-slate-100 pb-3">
               {editingId ? "Edit Master Field" : "Tambah Master Field Baru"}
             </h2>
@@ -576,7 +611,7 @@ export default function SaaMasterFieldsPage({
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">
                     TIPE INPUT
@@ -650,7 +685,7 @@ export default function SaaMasterFieldsPage({
                 </div>
               </div>
 
-              <div className="flex justify-end gap-3 border-t border-slate-100 pt-4">
+              <div className="flex flex-col-reverse gap-2 border-t border-slate-100 pt-4 sm:flex-row sm:justify-end sm:gap-3">
                 <button
                   type="button"
                   onClick={() => setIsFieldModalOpen(false)}
@@ -672,8 +707,8 @@ export default function SaaMasterFieldsPage({
 
       {/* MODAL 2: APPROVER STEP FORM */}
       {isStepModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-100 rounded-3xl max-w-lg w-full p-6 space-y-5 shadow-soft-lg">
+        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-900/40 p-3 backdrop-blur-sm sm:items-center sm:p-4">
+          <div className="my-auto max-h-[calc(100dvh-1.5rem)] w-full max-w-lg space-y-5 overflow-y-auto rounded-2xl border border-slate-100 bg-white p-4 shadow-soft-lg sm:rounded-3xl sm:p-6">
             <h2 className="text-base font-extrabold text-slate-800 border-b border-slate-100 pb-3">
               {editingId ? "Edit Master Approver Step" : "Tambah Master Approver Baru"}
             </h2>
@@ -731,7 +766,7 @@ export default function SaaMasterFieldsPage({
                 </div>
               </div>
 
-              <div className="flex justify-end gap-3 border-t border-slate-100 pt-4">
+              <div className="flex flex-col-reverse gap-2 border-t border-slate-100 pt-4 sm:flex-row sm:justify-end sm:gap-3">
                 <button
                   type="button"
                   onClick={() => setIsStepModalOpen(false)}
@@ -752,8 +787,8 @@ export default function SaaMasterFieldsPage({
       )}
 
       {isRoleModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
-          <div className="w-full max-w-lg space-y-5 rounded-3xl border border-slate-100 bg-white p-6 shadow-soft-lg">
+        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-900/40 p-3 backdrop-blur-sm sm:items-center sm:p-4">
+          <div className="my-auto max-h-[calc(100dvh-1.5rem)] w-full max-w-lg space-y-5 overflow-y-auto rounded-2xl border border-slate-100 bg-white p-4 shadow-soft-lg sm:rounded-3xl sm:p-6">
             <h2 className="border-b border-slate-100 pb-3 text-base font-extrabold text-slate-800">
               {editingId ? "Edit Role" : "Tambah Role Code"}
             </h2>
@@ -788,7 +823,7 @@ export default function SaaMasterFieldsPage({
                   className="mt-1.5 w-full border border-slate-200 rounded-2xl p-3 text-sm font-medium text-slate-800 focus:outline-none focus:border-indigo-500"
                 />
               </label>
-              <div className="flex justify-end gap-3 border-t border-slate-100 pt-4">
+              <div className="flex flex-col-reverse gap-2 border-t border-slate-100 pt-4 sm:flex-row sm:justify-end sm:gap-3">
                 <button type="button" onClick={() => setIsRoleModalOpen(false)} className="border border-slate-200 px-5 py-2.5 rounded-2xl text-xs font-bold text-slate-700 hover:bg-slate-50 transition">
                   Batal
                 </button>

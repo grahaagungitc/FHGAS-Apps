@@ -1,9 +1,12 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import Sidebar from "@/components/Sidebar";
 import NotificationBell from "@/components/NotificationBell";
-import { Menu, ShieldCheck, LogOut, User, ChevronDown } from "lucide-react";
+import AppNotificationProvider from "@/components/AppNotificationProvider";
+import { Home, Menu, ShieldCheck, LogOut, User, ChevronDown, ShieldAlert, X } from "lucide-react";
 import { useTheme } from "@/context/ThemeContext";
 
 interface DashboardShellProps {
@@ -12,6 +15,8 @@ interface DashboardShellProps {
     email?: string | null;
     systemRole?: string;
     isIT?: boolean;
+    isFOLeader?: boolean;
+    moduleCodes?: string[];
   };
   signOutAction: () => Promise<void>;
   children: React.ReactNode;
@@ -20,13 +25,24 @@ interface DashboardShellProps {
 export default function DashboardShell({ user, signOutAction, children }: DashboardShellProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+  const [accessDeniedModule, setAccessDeniedModule] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const mobileDropdownRef = useRef<HTMLDivElement>(null);
   const { theme } = useTheme();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const deniedModule = searchParams.get("accessDenied") === "1" ? searchParams.get("module") : null;
+
+  useEffect(() => {
+    if (deniedModule) setAccessDeniedModule(deniedModule);
+  }, [deniedModule]);
 
   // Close dropdown on click outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      const clickedDesktopDropdown = dropdownRef.current?.contains(event.target as Node);
+      const clickedMobileDropdown = mobileDropdownRef.current?.contains(event.target as Node);
+      if (!clickedDesktopDropdown && !clickedMobileDropdown) {
         setUserDropdownOpen(false);
       }
     }
@@ -35,30 +51,24 @@ export default function DashboardShell({ user, signOutAction, children }: Dashbo
   }, []);
 
   return (
-    <div className="flex min-h-screen" style={{ backgroundColor: theme.backgroundColor }}>
+    <AppNotificationProvider>
+    <div className="flex min-h-screen w-full min-w-0 overflow-x-clip" style={{ backgroundColor: theme.backgroundColor }}>
       {/* Sidebar Component */}
       <Sidebar
         user={user}
+        onAccessDenied={setAccessDeniedModule}
         signOutAction={signOutAction}
         isOpen={mobileMenuOpen}
         onClose={() => setMobileMenuOpen(false)}
       />
 
       {/* Main Area */}
-      <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto min-w-0">
-        <div className="w-full max-w-full">
+      <main className="min-w-0 flex-1 overflow-x-clip overflow-y-auto p-4 pb-24 sm:p-6 sm:pb-24 lg:p-8 lg:pb-8">
+        <div className="w-full min-w-0 max-w-full">
           {/* Top Bar Navigation for Mobile & Desktop */}
           <div className="mb-6 flex items-center justify-between gap-4 border-b border-slate-100 pb-4">
-            {/* Mobile Hamburger & Logo Header */}
+            {/* Mobile Brand Header */}
             <div className="flex items-center gap-3 lg:hidden">
-              <button
-                type="button"
-                onClick={() => setMobileMenuOpen(true)}
-                aria-label="Open navigation menu"
-                className="p-2.5 rounded-2xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 transition-colors shadow-soft"
-              >
-                <Menu className="w-5 h-5" />
-              </button>
               <div className="flex items-center gap-2">
                 <div
                   className="w-8 h-8 rounded-xl flex items-center justify-center text-white shadow-soft shrink-0 overflow-hidden"
@@ -83,8 +93,8 @@ export default function DashboardShell({ user, signOutAction, children }: Dashbo
             <div className="flex items-center gap-3 ml-auto">
               <NotificationBell />
 
-              {/* User Profile Dropdown Trigger */}
-              <div className="relative" ref={dropdownRef}>
+              {/* Desktop User Profile Dropdown Trigger */}
+              <div className="relative hidden lg:block" ref={dropdownRef}>
                 <button
                   type="button"
                   onClick={() => setUserDropdownOpen((prev) => !prev)}
@@ -147,6 +157,123 @@ export default function DashboardShell({ user, signOutAction, children }: Dashbo
           {children}
         </div>
       </main>
+
+      <nav
+        aria-label="Navigasi utama mobile"
+        className="fixed inset-x-0 bottom-0 z-[60] border-t border-slate-200 bg-white/95 pb-[env(safe-area-inset-bottom)] shadow-[0_-4px_16px_rgba(15,23,42,0.08)] backdrop-blur lg:hidden"
+      >
+        <div className="grid h-16 grid-cols-3">
+          <button
+            type="button"
+            aria-label="Buka menu"
+            aria-expanded={mobileMenuOpen}
+            onClick={() => {
+              setUserDropdownOpen(false);
+              setMobileMenuOpen((open) => !open);
+            }}
+            className={`flex flex-col items-center justify-center gap-1 text-[11px] font-semibold ${mobileMenuOpen ? "text-indigo-700" : "text-slate-500 hover:text-slate-900"}`}
+          >
+            <Menu className="h-5 w-5" />
+            <span>Menu</span>
+          </button>
+          <Link
+            href="/dashboard"
+            onClick={() => {
+              setMobileMenuOpen(false);
+              setUserDropdownOpen(false);
+            }}
+            aria-current={pathname === "/dashboard" ? "page" : undefined}
+            className={`flex flex-col items-center justify-center gap-1 text-[11px] font-semibold ${pathname === "/dashboard" ? "text-indigo-700" : "text-slate-500 hover:text-slate-900"}`}
+          >
+            <Home className="h-5 w-5" />
+            <span>Home</span>
+          </Link>
+          <div className="relative flex justify-center" ref={mobileDropdownRef}>
+            {userDropdownOpen && (
+              <div className="absolute bottom-full right-2 z-[70] mb-3 w-[min(18rem,calc(100vw-1rem))] rounded-xl border border-slate-200 bg-white p-4 shadow-xl">
+                <div className="mb-3 border-b border-slate-100 pb-3">
+                  <p className="truncate text-sm font-bold text-slate-800">{user.name || "User"}</p>
+                  <p className="mt-1 truncate text-xs text-slate-500">{user.email}</p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <span className="rounded-md border border-indigo-100 bg-indigo-50 px-2 py-1 text-[10px] font-bold text-indigo-700">
+                      Role: {user.systemRole || "STAFF"}
+                    </span>
+                    {user.isIT && (
+                      <span className="rounded-md border border-violet-100 bg-violet-50 px-2 py-1 text-[10px] font-bold text-violet-700">
+                        IT Member
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <form action={signOutAction}>
+                  <button type="submit" className="flex w-full items-center justify-center gap-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2.5 text-xs font-bold text-rose-700 hover:bg-rose-100">
+                    <LogOut className="h-4 w-4" />
+                    Keluar
+                  </button>
+                </form>
+              </div>
+            )}
+            <button
+              type="button"
+              aria-label="Buka profil"
+              aria-expanded={userDropdownOpen}
+              onClick={() => {
+                setMobileMenuOpen(false);
+                setUserDropdownOpen((open) => !open);
+              }}
+              className={`flex w-full flex-col items-center justify-center gap-1 text-[11px] font-semibold ${userDropdownOpen ? "text-indigo-700" : "text-slate-500 hover:text-slate-900"}`}
+            >
+              <User className="h-5 w-5" />
+              <span>Profile</span>
+            </button>
+          </div>
+        </div>
+      </nav>
+
+      {accessDeniedModule && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-[2px]">
+          <section
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="access-denied-title"
+            aria-describedby="access-denied-description"
+            className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-6 shadow-2xl"
+          >
+            <div className="flex items-start gap-4">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-rose-100 text-rose-700">
+                <ShieldAlert className="h-6 w-6" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <h2 id="access-denied-title" className="text-base font-bold text-slate-900">
+                  Akses ditolak
+                </h2>
+                <p className="mt-1 text-sm font-semibold text-rose-700">{accessDeniedModule}</p>
+                <p id="access-denied-description" className="mt-2 text-sm leading-6 text-slate-600">
+                  Akun Anda belum memiliki izin untuk membuka modul atau fungsi ini. Hubungi administrator untuk meminta akses.
+                </p>
+              </div>
+              <button
+                type="button"
+                aria-label="Tutup notifikasi akses ditolak"
+                onClick={() => setAccessDeniedModule(null)}
+                className="-mr-2 -mt-2 rounded-md p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-800"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="mt-6 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setAccessDeniedModule(null)}
+                className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700"
+              >
+                Mengerti
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
     </div>
+    </AppNotificationProvider>
   );
 }

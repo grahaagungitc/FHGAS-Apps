@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Building, Plus, Trash2, Loader2, X } from "lucide-react";
+import { useAppNotifications } from "@/components/AppNotificationProvider";
 
 interface Department {
   id: string;
@@ -10,6 +11,7 @@ interface Department {
 }
 
 export default function DepartmentManagementPage() {
+  const { notify, confirmAction } = useAppNotifications();
   const [departments, setDepartments] = useState<Department[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -59,20 +61,21 @@ export default function DepartmentManagementPage() {
         setCodeInput("");
         setIsModalOpen(false);
         fetchDepartments();
+        notify("Departemen berhasil ditambahkan.", "success");
       } else {
         const err = await res.json();
-        alert(`Gagal menambah departemen: ${err.message || "Terjadi kesalahan"}`);
+        notify(`Gagal menambah departemen: ${err.message || "Terjadi kesalahan"}`, "error");
       }
     } catch (err) {
       console.error(err);
-      alert("Gagal menghubungi server.");
+      notify("Gagal menghubungi server.", "error");
     } finally {
       setSaving(false);
     }
   };
 
   const handleDelete = async (id: string, name: string) => {
-    if (!confirm(`Apakah Anda yakin ingin menghapus departemen "${name}"?`)) return;
+    if (!(await confirmAction(`Apakah Anda yakin ingin menghapus departemen "${name}"?`))) return;
 
     try {
       const res = await fetch(`/api/departments/${id}`, {
@@ -81,14 +84,14 @@ export default function DepartmentManagementPage() {
 
       if (res.ok) {
         setDepartments(departments.filter((d) => d.id !== id));
-        alert("Departemen berhasil dihapus.");
+        notify("Departemen berhasil dihapus.", "success");
       } else {
         const err = await res.json();
-        alert(`Gagal menghapus: ${err.message || "Departemen mungkin masih digunakan oleh user"}`);
+        notify(`Gagal menghapus: ${err.message || "Departemen mungkin masih digunakan oleh user"}`, "error");
       }
     } catch (err) {
       console.error(err);
-      alert("Terjadi kesalahan server.");
+      notify("Terjadi kesalahan server.", "error");
     }
   };
 
@@ -119,12 +122,13 @@ export default function DepartmentManagementPage() {
 
       {/* Tabel Department */}
       <div className="bg-white border border-slate-100 rounded-3xl shadow-soft overflow-hidden">
-        <table className="w-full text-left border-collapse">
+        <div className="max-w-full overflow-x-auto overscroll-x-contain">
+        <table className="w-full table-fixed text-left border-collapse">
           <thead>
             <tr className="bg-slate-50 text-slate-500 text-xs font-bold uppercase tracking-wider border-b border-slate-100">
-              <th className="p-4 pl-6">KODE</th>
-              <th className="p-4">NAMA DEPARTEMEN</th>
-              <th className="p-4 text-center pr-6">AKSI</th>
+              <th className="w-1/4 break-words p-3 sm:p-4 sm:pl-6">KODE</th>
+              <th className="w-1/2 break-words p-3 sm:p-4">NAMA DEPARTEMEN</th>
+              <th className="w-1/4 break-words p-3 text-center sm:p-4 sm:pr-6">AKSI</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 text-xs font-medium text-slate-700">
@@ -144,9 +148,9 @@ export default function DepartmentManagementPage() {
             ) : (
               departments.map((dept) => (
                 <tr key={dept.id} className="hover:bg-slate-50/60 transition">
-                  <td className="p-4 pl-6 font-bold text-[#5C61F4]">{dept.code || "-"}</td>
-                  <td className="p-4 font-bold text-slate-800">{dept.name}</td>
-                  <td className="p-4 text-center pr-6">
+                  <td className="break-words p-3 font-bold text-[#5C61F4] sm:p-4 sm:pl-6">{dept.code || "-"}</td>
+                  <td className="break-words p-3 font-bold text-slate-800 sm:p-4">{dept.name}</td>
+                  <td className="p-3 text-center sm:p-4 sm:pr-6">
                     <button
                       onClick={() => handleDelete(dept.id, dept.name)}
                       className="p-2 bg-rose-50 text-rose-600 rounded-xl hover:bg-rose-100 transition"
@@ -160,12 +164,13 @@ export default function DepartmentManagementPage() {
             )}
           </tbody>
         </table>
+        </div>
       </div>
 
       {/* Modal Add Department */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-white border border-slate-100 rounded-3xl p-6 w-full max-w-md shadow-soft-lg space-y-5">
+        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-900/40 p-3 backdrop-blur-sm sm:items-center sm:p-4">
+          <div className="my-auto max-h-[calc(100dvh-1.5rem)] w-full max-w-md space-y-5 overflow-y-auto rounded-2xl border border-slate-100 bg-white p-4 shadow-soft-lg sm:rounded-3xl sm:p-6">
             <div className="flex justify-between items-center border-b border-slate-100 pb-4">
               <h3 className="font-extrabold text-slate-800 text-base">Tambah Departemen Baru</h3>
               <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-700">
@@ -195,7 +200,7 @@ export default function DepartmentManagementPage() {
                   className="w-full p-3 border border-slate-200 rounded-2xl text-sm font-medium text-slate-800 focus:outline-none focus:border-indigo-500 transition-all"
                 />
               </div>
-              <div className="flex justify-end gap-3 pt-2">
+              <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end sm:gap-3">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}

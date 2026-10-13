@@ -181,7 +181,7 @@ export default function SaaCreatePage() {
   }
 
   return (
-    <div className="w-full space-y-6">
+    <div className="w-full min-w-0 space-y-6">
       <header className="flex flex-wrap items-center gap-4 bg-white border border-slate-100 rounded-3xl p-6 shadow-soft">
         <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-50 text-[#5C61F4]">
           <FileSignature className="h-6 w-6" />
@@ -198,8 +198,8 @@ export default function SaaCreatePage() {
       {forms.length === 0 ? (
         <p className="bg-white border border-slate-100 rounded-3xl py-12 text-center text-sm font-medium text-slate-400 shadow-soft">Belum ada tipe SAA aktif.</p>
       ) : (
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="bg-white border border-slate-100 rounded-3xl p-6 shadow-soft space-y-3">
+        <form onSubmit={handleSubmit} className="min-w-0 space-y-6">
+          <div className="min-w-0 space-y-3 rounded-2xl border border-slate-100 bg-white p-4 shadow-soft sm:rounded-3xl sm:p-6">
             <label className="block max-w-xl text-xs font-bold text-slate-700">
               TIPE FORM SAA <span className="text-rose-500">*</span>
               <select value={selectedFormId} onChange={(event) => handleFormChange(event.target.value)} required className="mt-2 w-full border border-slate-200 bg-white p-3 text-sm rounded-2xl font-semibold text-slate-800 focus:outline-none focus:border-indigo-500 transition-all cursor-pointer">
@@ -217,12 +217,12 @@ export default function SaaCreatePage() {
             onFieldChange={handleFieldChange}
           />
 
-          <section className="space-y-4 bg-slate-900 rounded-3xl p-6 text-white shadow-soft">
+          <section className="min-w-0 space-y-4 rounded-2xl bg-slate-900 p-4 text-white shadow-soft sm:rounded-3xl sm:p-6">
             <h2 className="flex items-center gap-2 border-b border-slate-800 pb-4 text-xs font-bold uppercase tracking-wider text-indigo-300">
               <ShieldCheck className="h-5 w-5 text-[#5C61F4]" /> Approval Workflow
             </h2>
             <div className="flex flex-wrap items-stretch gap-3">
-              <div className="flex min-w-44 items-center gap-3 border border-slate-800 bg-slate-800/60 p-3.5 rounded-2xl">
+              <div className="flex min-w-0 flex-1 basis-full items-center gap-3 rounded-2xl border border-slate-800 bg-slate-800/60 p-3.5 sm:min-w-44 sm:basis-auto">
                 <UserCheck className="h-4 w-4 text-indigo-400" />
                 <div>
                   <p className="text-[10px] font-bold uppercase text-indigo-300">Request By</p>
@@ -230,7 +230,7 @@ export default function SaaCreatePage() {
                 </div>
               </div>
               {approvalSteps.map((step) => (
-                <div key={step.id} className="min-w-44 border border-slate-800 bg-slate-800/60 p-3.5 rounded-2xl">
+                <div key={step.id} className="min-w-0 flex-1 basis-full rounded-2xl border border-slate-800 bg-slate-800/60 p-3.5 sm:min-w-44 sm:basis-auto">
                   <p className="text-[10px] font-bold uppercase text-indigo-300">Step {step.step} · {step.role}</p>
                   <p className="mt-1 text-xs font-bold">{step.label || step.role}</p>
                 </div>
@@ -239,8 +239,8 @@ export default function SaaCreatePage() {
             </div>
           </section>
 
-          <div className="flex justify-end">
-            <button type="submit" disabled={submitting || approvalSteps.length === 0} className="inline-flex items-center gap-2 bg-[#5C61F4] hover:bg-indigo-600 text-white px-6 py-3.5 rounded-2xl text-xs font-bold shadow-soft hover:shadow-indigo-200 transition-all disabled:cursor-not-allowed disabled:opacity-50 active:scale-[0.99]">
+          <div className="flex justify-stretch sm:justify-end">
+            <button type="submit" disabled={submitting || approvalSteps.length === 0} className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-[#5C61F4] px-6 py-3.5 text-xs font-bold text-white shadow-soft transition-all hover:bg-indigo-600 hover:shadow-indigo-200 disabled:cursor-not-allowed disabled:opacity-50 active:scale-[0.99] sm:w-auto">
               <Send className="h-4 w-4" />
               {submitting ? "MENGIRIM..." : "SUBMIT PENGAJUAN SAA"}
             </button>

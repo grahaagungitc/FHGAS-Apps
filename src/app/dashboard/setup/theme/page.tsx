@@ -7,7 +7,6 @@ import {
   Image as ImageIcon,
   RotateCcw,
   Save,
-  Check,
   UploadCloud,
   Sliders,
   Sparkles,
@@ -18,6 +17,7 @@ import {
   X,
 } from "lucide-react";
 import { useTheme, ThemeConfig } from "@/context/ThemeContext";
+import { useAppNotifications } from "@/components/AppNotificationProvider";
 
 const FONT_OPTIONS = [
   { value: "Inter", label: "Inter (Modern & Clean)" },
@@ -45,13 +45,17 @@ const PRESET_THEMES: {
   { name: "Slate Minimalist Monochrome", primary: "#334155", accent: "#64748B", bg: "#F8FAFC", headerFont: "Roboto" },
 ];
 
+const DEFAULT_LOGIN_BACKGROUND = "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=2400&q=85";
+
 export default function ThemeCustomizerPage() {
+  const { notify, confirmAction } = useAppNotifications();
   const { theme, updateTheme, saveTheme, resetTheme, loading } = useTheme();
   const [draft, setDraft] = useState<ThemeConfig>(theme);
   const [saving, setSaving] = useState(false);
-  const [savedSuccess, setSavedSuccess] = useState(false);
   
   const logoInputRef = useRef<HTMLInputElement>(null);
+  const loginBackgroundInputRef = useRef<HTMLInputElement>(null);
+  const mobileLoginBackgroundInputRef = useRef<HTMLInputElement>(null);
   const fontInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -84,7 +88,7 @@ export default function ThemeCustomizerPage() {
     if (!file) return;
 
     if (file.size > 2 * 1024 * 1024) {
-      alert("Ukuran logo maksimal 2MB.");
+      notify("Ukuran logo maksimal 2MB.", "warning");
       return;
     }
 
@@ -98,13 +102,34 @@ export default function ThemeCustomizerPage() {
     reader.readAsDataURL(file);
   };
 
+  const handleLoginBackgroundUpload = (
+    event: React.ChangeEvent<HTMLInputElement>,
+    setting: "loginBackgroundUrl" | "mobileLoginBackgroundUrl"
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      notify("Ukuran gambar login maksimal 5MB.", "warning");
+      event.target.value = "";
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (loadEvent) => {
+      const dataUrl = loadEvent.target?.result as string;
+      if (dataUrl) handleChange(setting, dataUrl);
+    };
+    reader.readAsDataURL(file);
+    event.target.value = "";
+  };
+
   const handleFontUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     // Max 3MB for font file
     if (file.size > 3 * 1024 * 1024) {
-      alert("Ukuran file font maksimal 3MB.");
+      notify("Ukuran file font maksimal 3MB.", "warning");
       return;
     }
 
@@ -141,14 +166,14 @@ export default function ThemeCustomizerPage() {
         setDraft(updated);
         updateTheme(updated);
         if (fontInputRef.current) fontInputRef.current.value = "";
-        alert(`Font "${cleanFontName}" berhasil ditambahkan ke daftar font yang dapat dipilih!`);
+        notify(`Font "${cleanFontName}" berhasil ditambahkan ke daftar font yang dapat dipilih!`, "success");
       }
     };
     reader.readAsDataURL(file);
   };
 
-  const handleRemoveCustomFont = (fontName: string) => {
-    if (!confirm(`Hapus font "${fontName}" dari daftar pilihan font?`)) return;
+  const handleRemoveCustomFont = async (fontName: string) => {
+    if (!(await confirmAction(`Hapus font "${fontName}" dari daftar pilihan font?`))) return;
     const currentFonts = (Array.isArray(draft.customFonts) ? draft.customFonts : []).filter(
       (f) => f.name !== fontName
     );
@@ -163,6 +188,7 @@ export default function ThemeCustomizerPage() {
     };
     setDraft(updated);
     updateTheme(updated);
+    notify(`Font "${fontName}" berhasil dihapus.`, "success");
   };
 
   const handleSave = async () => {
@@ -170,18 +196,17 @@ export default function ThemeCustomizerPage() {
     const ok = await saveTheme(draft);
     setSaving(false);
     if (ok) {
-      setSavedSuccess(true);
-      setTimeout(() => setSavedSuccess(false), 3000);
+      notify("Konfigurasi UI berhasil disimpan.", "success");
     } else {
-      alert("Gagal menyimpan konfigurasi UI.");
+      notify("Gagal menyimpan konfigurasi UI.", "error");
     }
   };
 
   const handleReset = async () => {
-    if (!confirm("Kembalikan seluruh tema ke setelan bawaan sistem?")) return;
+    if (!(await confirmAction("Kembalikan seluruh tema ke setelan bawaan sistem?"))) return;
     await resetTheme();
     setDraft(theme);
-    alert("Tema berhasil di-reset ke default.");
+    notify("Tema berhasil di-reset ke default.", "success");
   };
 
   // Compile active font options including all custom uploaded fonts
@@ -236,15 +261,7 @@ export default function ThemeCustomizerPage() {
             className="flex items-center gap-2 text-white px-5 py-2.5 rounded-2xl text-xs font-bold shadow-soft transition hover:opacity-90 disabled:opacity-50"
             style={{ backgroundColor: draft.primaryColor }}
           >
-            {savedSuccess ? (
-              <>
-                <Check size={16} /> Tersimpan!
-              </>
-            ) : (
-              <>
-                <Save size={16} /> {saving ? "Menyimpan..." : "Simpan Pengaturan UI"}
-              </>
-            )}
+            <Save size={16} /> {saving ? "Menyimpan..." : "Simpan Pengaturan UI"}
           </button>
         </div>
       </header>
@@ -364,6 +381,81 @@ export default function ThemeCustomizerPage() {
                 </div>
               </div>
             </div>
+
+            <div className="border-t border-slate-100 pt-5">
+              <label className="mb-2 block text-xs font-bold text-slate-700">
+                BACKGROUND LOGIN DESKTOP
+              </label>
+              <div className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50 p-3 sm:p-4">
+                <div
+                  className="h-28 w-full rounded-xl border border-slate-200 bg-cover bg-center sm:h-36"
+                  style={{ backgroundImage: `url(${draft.loginBackgroundUrl || DEFAULT_LOGIN_BACKGROUND})` }}
+                />
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => loginBackgroundInputRef.current?.click()}
+                    className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 hover:bg-slate-100"
+                  >
+                    <UploadCloud size={14} /> Upload background
+                  </button>
+                  {draft.loginBackgroundUrl && (
+                    <button
+                      type="button"
+                      onClick={() => handleChange("loginBackgroundUrl", "")}
+                      className="rounded-lg border border-rose-200 bg-rose-50 px-3.5 py-2 text-xs font-bold text-rose-700 hover:bg-rose-100"
+                    >
+                      Gunakan foto default
+                    </button>
+                  )}
+                </div>
+                <p className="text-[11px] leading-5 text-slate-500">Format gambar JPG, PNG, atau WebP. Maksimal 5MB. Foto ini menjadi latar penuh pada halaman login desktop.</p>
+                <input
+                  ref={loginBackgroundInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  onChange={(event) => handleLoginBackgroundUpload(event, "loginBackgroundUrl")}
+                  className="hidden"
+                />
+              </div>
+            </div>
+            <div className="border-t border-slate-100 pt-5">
+              <label className="mb-2 block text-xs font-bold text-slate-700">
+                BACKGROUND LOGIN MOBILE
+              </label>
+              <div className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50 p-3 sm:p-4">
+                <div
+                  className="mx-auto h-36 w-24 rounded-xl border border-slate-200 bg-cover bg-center sm:h-44 sm:w-28"
+                  style={{ backgroundImage: `url(${draft.mobileLoginBackgroundUrl || draft.loginBackgroundUrl || DEFAULT_LOGIN_BACKGROUND})` }}
+                />
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => mobileLoginBackgroundInputRef.current?.click()}
+                    className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 hover:bg-slate-100"
+                  >
+                    <UploadCloud size={14} /> Upload background mobile
+                  </button>
+                  {draft.mobileLoginBackgroundUrl && (
+                    <button
+                      type="button"
+                      onClick={() => handleChange("mobileLoginBackgroundUrl", "")}
+                      className="rounded-lg border border-rose-200 bg-rose-50 px-3.5 py-2 text-xs font-bold text-rose-700 hover:bg-rose-100"
+                    >
+                      Gunakan background desktop
+                    </button>
+                  )}
+                </div>
+                <p className="text-[11px] leading-5 text-slate-500">Khusus layar mobile. Jika belum diunggah, background desktop yang digunakan. Maksimal 5MB.</p>
+                <input
+                  ref={mobileLoginBackgroundInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  onChange={(event) => handleLoginBackgroundUpload(event, "mobileLoginBackgroundUrl")}
+                  className="hidden"
+                />
+              </div>
+            </div>
           </div>
 
           {/* Card 2: Skema Warna & Tombol Aksen */}
@@ -377,8 +469,8 @@ export default function ThemeCustomizerPage() {
               {/* Primary Color */}
               <div className="p-3.5 border border-slate-100 rounded-2xl bg-slate-50 flex items-center justify-between gap-3">
                 <div>
-                  <div className="text-xs font-bold text-slate-800">WARNA UTAMA (TOMBOL PRIMARY)</div>
-                  <div className="text-[11px] text-slate-400">Tombol aksi utama, navbar aktif</div>
+                  <div className="text-xs font-bold text-slate-800">WARNA AKSI UTAMA</div>
+                  <div className="text-[11px] text-slate-400">Tombol utama dan menu aktif sidebar</div>
                 </div>
                 <div className="flex items-center gap-2">
                   <input
@@ -399,8 +491,8 @@ export default function ThemeCustomizerPage() {
               {/* Accent Color */}
               <div className="p-3.5 border border-slate-100 rounded-2xl bg-slate-50 flex items-center justify-between gap-3">
                 <div>
-                  <div className="text-xs font-bold text-slate-800">WARNA AKSEN (HIGHLIGHT & BADGE)</div>
-                  <div className="text-[11px] text-slate-400">Badge status, sorotan, indikator aktif</div>
+                  <div className="text-xs font-bold text-slate-800">WARNA HIGHLIGHT SEKUNDER</div>
+                  <div className="text-[11px] text-slate-400">Sorotan sekunder, badge, dan indikator</div>
                 </div>
                 <div className="flex items-center gap-2">
                   <input

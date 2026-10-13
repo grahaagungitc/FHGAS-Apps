@@ -1,4 +1,8 @@
 import Link from "next/link";
+import { auth } from "@/auth";
+import { redirect } from "next/navigation";
+import { db } from "@/lib/db";
+import { getUserModuleAccess } from "@/lib/module-access";
 import { Wrench, ArrowLeft, Receipt, FileText, CreditCard, ShieldCheck } from "lucide-react";
 
 type PageProps = {
@@ -7,8 +11,41 @@ type PageProps = {
   };
 };
 
-export default function DepartmentPage({ params }: PageProps) {
+const DEFAULT_DEPARTMENT_MODULES: Record<string, { code: string; name: string }> = {
+  "admin-general/hm": { code: "AG_HOTEL_MANAGER", name: "Hotel Manager" },
+  "hr": { code: "DEPT_HR", name: "Human Resource" },
+  "finance/leader": { code: "FIN_LEADER", name: "Finance Leader" },
+  "finance/ap-cashier": { code: "FIN_AP_CASHIER", name: "Account Payable / Cashier" },
+  "finance/purchasing": { code: "FIN_PURCHASING", name: "Store Keeper / Purchasing" },
+  "fo/front-desk": { code: "FO_FRONT_DESK", name: "Front Desk & Remittance" },
+  "fo/concierge": { code: "FO_CONCIERGE", name: "Concierge" },
+  "sales": { code: "DEPT_SALES", name: "Sales & Marketing" },
+  "engineering": { code: "DEPT_ENG", name: "Engineering" },
+  "housekeeping": { code: "DEPT_HK", name: "Housekeeping" },
+  "fb": { code: "DEPT_FB", name: "Food & Beverage" },
+  "security": { code: "DEPT_SEC", name: "Security" },
+};
+
+export default async function DepartmentPage({ params }: PageProps) {
   const slugPath = (params?.slug || []).join("/");
+  const modulePath = `/dashboard/departments/${slugPath}`;
+  const session = await auth();
+  const [configuredModule, access] = await Promise.all([
+    db.appModule.findFirst({
+      where: { path: modulePath },
+      select: { code: true, name: true },
+    }),
+    getUserModuleAccess(session?.user?.email),
+  ]);
+  const departmentModule = configuredModule || DEFAULT_DEPARTMENT_MODULES[slugPath];
+
+  const hasLegacyModuleAccess =
+    (departmentModule?.code === "FO_FRONT_DESK" && access.isFOLeader) ||
+    (departmentModule?.code === "IT_SAA" && access.isIT);
+  if (departmentModule && !access.isAdmin && !access.moduleCodes.includes(departmentModule.code) && !hasLegacyModuleAccess) {
+    redirect(`/dashboard?accessDenied=1&module=${encodeURIComponent(departmentModule.name)}`);
+  }
+
   const departmentName = (params?.slug || [])
     .map((s) => s.replace(/-/g, " ").toUpperCase())
     .join(" / ");

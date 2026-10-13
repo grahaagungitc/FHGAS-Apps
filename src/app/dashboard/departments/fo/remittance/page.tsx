@@ -151,6 +151,12 @@ export default function FORemittancePage() {
             setSelectedStaffName(staffs[0].name);
           }
         }
+      } else {
+        const error = await res.json().catch(() => null);
+        showToast(
+          error?.message || "Anda tidak memiliki akses untuk memuat data Remittance.",
+          "error"
+        );
       }
     } catch (err) {
       console.error("Failed to load remittance data:", err);
@@ -715,6 +721,9 @@ export default function FORemittancePage() {
 
           {/* Table History */}
           <div className="border border-slate-100 rounded-2xl overflow-hidden bg-white">
+            <p className="px-4 pt-3 text-[11px] font-medium text-slate-500 sm:hidden">
+              Geser tabel ke samping untuk melihat detail dan aksi lainnya.
+            </p>
             <DragScrollContainer>
               <table className="w-full text-xs font-medium text-left min-w-[750px]">
               <thead className="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
@@ -811,8 +820,8 @@ export default function FORemittancePage() {
 
       {/* MODAL POPUP PREVIEW AMPLOP */}
       {previewModalOpen && previewData && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-lg w-full overflow-hidden shadow-soft-lg flex flex-col max-h-[90vh]">
+        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-900/60 p-3 backdrop-blur-sm sm:items-center sm:p-4">
+          <div className="my-auto flex max-h-[calc(100dvh-1.5rem)] w-full max-w-lg flex-col overflow-hidden rounded-2xl bg-white shadow-soft-lg sm:rounded-3xl">
             <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-white">
               <h3 className="font-extrabold text-slate-800 text-sm flex items-center gap-2">
                 <FileSpreadsheet className="w-4 h-4 text-[#5C61F4]" />
@@ -829,7 +838,7 @@ export default function FORemittancePage() {
 
             {/* Modal Body: Envelope Visual Matching AppScript Exact Style */}
             <div className="p-6 overflow-y-auto bg-[#f7fafc] flex justify-center">
-              <div className="w-[88mm] bg-white border border-slate-300 p-4 text-black font-sans text-left space-y-3 shadow-md rounded-none leading-normal">
+              <div className="w-[88mm] max-w-full rounded-none border border-slate-300 bg-white p-3 text-left font-sans text-black shadow-md leading-normal sm:p-4">
                 <div className="border-b-2 border-black pb-1.5 flex items-end justify-between">
                   <div>
                     <div className="text-xl font-black text-[#8b2550] leading-none tracking-tight">favehotel</div>

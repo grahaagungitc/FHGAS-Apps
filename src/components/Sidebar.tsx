@@ -30,13 +30,16 @@ interface SidebarProps {
     email?: string | null;
     systemRole?: string;
     isIT?: boolean;
+    isFOLeader?: boolean;
+    moduleCodes?: string[];
   };
+  onAccessDenied: (moduleName: string) => void;
   signOutAction: () => Promise<void>;
   isOpen?: boolean;
   onClose?: () => void;
 }
 
-export default function Sidebar({ user, signOutAction, isOpen = false, onClose }: SidebarProps) {
+export default function Sidebar({ user, onAccessDenied, signOutAction, isOpen = false, onClose }: SidebarProps) {
   const pathname = usePathname();
   const { theme } = useTheme();
 
@@ -58,49 +61,76 @@ export default function Sidebar({ user, signOutAction, isOpen = false, onClose }
     if (onClose) onClose();
   };
 
+  const handleModuleClick = (
+    event: React.MouseEvent<HTMLAnchorElement>,
+    moduleName: string,
+    moduleCode: string
+  ) => {
+    handleLinkClick();
+    const hasAccess =
+      user.systemRole === "ADMIN" ||
+      (moduleCode === "IT_SAA" && user.isIT) ||
+      (moduleCode === "FO_FRONT_DESK" && user.isFOLeader) ||
+      user.moduleCodes?.includes(moduleCode);
+
+    if (!hasAccess) {
+      event.preventDefault();
+      onAccessDenied(moduleName);
+    }
+  };
+
+  const handleSetupClick = (event: React.MouseEvent<HTMLAnchorElement>, moduleName: string) => {
+    handleLinkClick();
+    if (user.systemRole !== "ADMIN") {
+      event.preventDefault();
+      onAccessDenied(moduleName);
+    }
+  };
+
   // Data Struktur Departemen & Sub-menu
   const departmentsData: {
     key: string;
     name: string;
     href?: string;
-    subItems?: { name: string; href: string; icon?: LucideIcon }[];
+    moduleCode?: string;
+    subItems?: { name: string; href: string; moduleCode: string; icon?: LucideIcon }[];
   }[] = [
     {
       key: "admin-general",
       name: "Admin & General",
-      subItems: [{ name: "Hotel Manager", href: "/dashboard/departments/admin-general/hm" }],
+      subItems: [{ name: "Hotel Manager", href: "/dashboard/departments/admin-general/hm", moduleCode: "AG_HOTEL_MANAGER" }],
     },
-    { key: "hr", name: "Human Resource", href: "/dashboard/departments/hr" },
+    { key: "hr", name: "Human Resource", href: "/dashboard/departments/hr", moduleCode: "DEPT_HR" },
     {
       key: "finance",
       name: "Finance & Accounting",
       subItems: [
-        { name: "Finance Leader", href: "/dashboard/departments/finance/leader" },
-        { name: "Account Payable / Cashier", href: "/dashboard/departments/finance/ap-cashier" },
-        { name: "Store Keeper / Purchasing", href: "/dashboard/departments/finance/purchasing" },
+        { name: "Finance Leader", href: "/dashboard/departments/finance/leader", moduleCode: "FIN_LEADER" },
+        { name: "Account Payable / Cashier", href: "/dashboard/departments/finance/ap-cashier", moduleCode: "FIN_AP_CASHIER" },
+        { name: "Store Keeper / Purchasing", href: "/dashboard/departments/finance/purchasing", moduleCode: "FIN_PURCHASING" },
       ],
     },
     {
       key: "fo",
       name: "Front Office",
       subItems: [
-        { name: "Front Desk", href: "/dashboard/departments/fo/front-desk" },
-        { name: "Concierge", href: "/dashboard/departments/fo/concierge" },
+        { name: "Front Desk", href: "/dashboard/departments/fo/front-desk", moduleCode: "FO_FRONT_DESK" },
+        { name: "Concierge", href: "/dashboard/departments/fo/concierge", moduleCode: "FO_CONCIERGE" },
       ],
     },
-    { key: "sales", name: "Sales & Marketing", href: "/dashboard/departments/sales" },
-    { key: "engineering", name: "Engineering", href: "/dashboard/departments/engineering" },
-    { key: "housekeeping", name: "Housekeeping", href: "/dashboard/departments/housekeeping" },
+    { key: "sales", name: "Sales & Marketing", href: "/dashboard/departments/sales", moduleCode: "DEPT_SALES" },
+    { key: "engineering", name: "Engineering", href: "/dashboard/departments/engineering", moduleCode: "DEPT_ENG" },
+    { key: "housekeeping", name: "Housekeeping", href: "/dashboard/departments/housekeeping", moduleCode: "DEPT_HK" },
     {
       key: "it",
       name: "Information Technology",
       subItems: [
-        { name: "SAA Requests", href: "/dashboard/it/saa", icon: FileSignature },
-        { name: "Failover Procedure", href: "/dashboard/it/failover", icon: Activity },
+        { name: "SAA Requests", href: "/dashboard/it/saa", moduleCode: "IT_SAA", icon: FileSignature },
+        { name: "Failover Procedure", href: "/dashboard/it/failover", moduleCode: "IT_FAILOVER", icon: Activity },
       ],
     },
-    { key: "fb", name: "Food & Beverage", href: "/dashboard/departments/fb" },
-    { key: "security", name: "Security", href: "/dashboard/departments/security" },
+    { key: "fb", name: "Food & Beverage", href: "/dashboard/departments/fb", moduleCode: "DEPT_FB" },
+    { key: "security", name: "Security", href: "/dashboard/departments/security", moduleCode: "DEPT_SEC" },
   ];
 
   return (
@@ -116,7 +146,7 @@ export default function Sidebar({ user, signOutAction, isOpen = false, onClose }
       {/* Sidebar Drawer Container */}
       <aside
         style={{ fontFamily: `'${theme.bodyFont}', system-ui, sans-serif` }}
-        className={`w-72 bg-white border-r border-slate-100 flex flex-col justify-between h-screen fixed lg:sticky top-0 left-0 text-slate-800 shadow-xl lg:shadow-sm z-50 transform transition-transform duration-300 ease-in-out ${
+        className={`fixed bottom-16 left-0 z-50 flex h-[calc(100dvh-4rem)] w-72 flex-col justify-between border-r border-slate-100 bg-white text-slate-800 shadow-xl transition-transform duration-300 ease-in-out lg:sticky lg:top-0 lg:bottom-auto lg:h-screen lg:shadow-sm ${
           isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         }`}
       >
@@ -216,21 +246,14 @@ export default function Sidebar({ user, signOutAction, isOpen = false, onClose }
                           {/* Sub-Items */}
                           {isSubOpen && (
                             <div className="ml-2 pl-2.5 border-l-2 border-indigo-400 my-1 space-y-1">
-                              {dept.subItems
-                                .filter(
-                                  (sub) =>
-                                    sub.name !== "SAA Requests" ||
-                                    user.isIT ||
-                                    user.systemRole === "ADMIN"
-                                )
-                                .map((sub) => {
+                              {dept.subItems.map((sub) => {
                                 const isActive = pathname === sub.href;
                                 const Icon = sub.icon || Folder;
                                 return (
                                   <Link
                                     key={sub.href}
                                     href={sub.href}
-                                    onClick={handleLinkClick}
+                                    onClick={(event) => handleModuleClick(event, sub.name, sub.moduleCode)}
                                     className={`flex items-center gap-2 px-2.5 py-2 rounded-lg transition-all ${
                                       isActive
                                         ? "bg-indigo-50 text-[#5C61F4] font-bold"
@@ -252,7 +275,7 @@ export default function Sidebar({ user, signOutAction, isOpen = false, onClose }
                       <Link
                         key={dept.key}
                         href={dept.href || "#"}
-                        onClick={handleLinkClick}
+                        onClick={(event) => handleModuleClick(event, dept.name, dept.moduleCode || "")}
                         className={`block px-2.5 py-2 rounded-lg font-medium transition-all ${
                           pathname === dept.href
                             ? "bg-indigo-50 text-[#5C61F4] font-bold"
@@ -284,7 +307,7 @@ export default function Sidebar({ user, signOutAction, isOpen = false, onClose }
                 <div className="ml-4 pl-3 border-l border-slate-200 mt-1 space-y-1">
                   <Link
                     href="/dashboard/setup/users"
-                    onClick={handleLinkClick}
+                    onClick={(event) => handleSetupClick(event, "User Management")}
                     className={`flex items-center gap-2 px-2.5 py-2 rounded-lg font-medium transition-all ${
                       pathname === "/dashboard/setup/users"
                         ? "bg-indigo-50 text-[#5C61F4] font-bold"
@@ -297,7 +320,7 @@ export default function Sidebar({ user, signOutAction, isOpen = false, onClose }
 
                   <Link
                     href="/dashboard/setup/roles"
-                    onClick={handleLinkClick}
+                    onClick={(event) => handleSetupClick(event, "Roles & Permissions")}
                     className={`flex items-center gap-2 px-2.5 py-2 rounded-lg font-medium transition-all ${
                       pathname === "/dashboard/setup/roles"
                         ? "bg-indigo-50 text-[#5C61F4] font-bold"
@@ -310,7 +333,7 @@ export default function Sidebar({ user, signOutAction, isOpen = false, onClose }
 
                   <Link
                     href="/dashboard/setup/theme"
-                    onClick={handleLinkClick}
+                    onClick={(event) => handleSetupClick(event, "UI & Branding")}
                     className={`flex items-center gap-2 px-2.5 py-2 rounded-lg font-medium transition-all ${
                       pathname === "/dashboard/setup/theme"
                         ? "bg-indigo-50 text-[#5C61F4] font-bold"
@@ -324,7 +347,7 @@ export default function Sidebar({ user, signOutAction, isOpen = false, onClose }
                   {user.systemRole === "ADMIN" && (
                     <Link
                       href="/dashboard/setup/access-requests"
-                      onClick={handleLinkClick}
+                        onClick={(event) => handleSetupClick(event, "Access Requests")}
                       className={`flex items-center gap-2 px-2.5 py-2 rounded-lg font-medium transition-all ${
                         pathname === "/dashboard/setup/access-requests"
                           ? "bg-indigo-50 text-[#5C61F4] font-bold"
@@ -338,7 +361,7 @@ export default function Sidebar({ user, signOutAction, isOpen = false, onClose }
 
                   <Link
                     href="/dashboard/setup/departments"
-                    onClick={handleLinkClick}
+                    onClick={(event) => handleSetupClick(event, "Department Management")}
                     className={`flex items-center gap-2 px-2.5 py-2 rounded-lg font-medium transition-all ${
                       pathname === "/dashboard/setup/departments"
                         ? "bg-indigo-50 text-[#5C61F4] font-bold"
@@ -351,7 +374,7 @@ export default function Sidebar({ user, signOutAction, isOpen = false, onClose }
 
                   <Link
                     href="/dashboard/setup/saa-config"
-                    onClick={handleLinkClick}
+                    onClick={(event) => handleSetupClick(event, "SAA Configuration")}
                     className={`flex items-center gap-2 px-2.5 py-2 rounded-lg font-medium transition-all ${
                       pathname === "/dashboard/setup/saa-config"
                         ? "bg-indigo-50 text-[#5C61F4] font-bold"

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { UserPlus, Pencil, Trash2, ShieldCheck, Loader2, X } from "lucide-react";
 import DragScrollContainer from "@/components/DragScrollContainer";
+import { useAppNotifications } from "@/components/AppNotificationProvider";
 
 export type UserRole = string;
 
@@ -31,6 +32,7 @@ interface User {
 }
 
 export default function UserManagementPage() {
+  const { notify, confirmAction } = useAppNotifications();
   const [users, setUsers] = useState<User[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [availableRoles, setAvailableRoles] = useState<RoleOption[]>([]);
@@ -196,39 +198,40 @@ export default function UserManagementPage() {
       });
 
       if (res.ok) {
-        alert(
+        notify(
           editingUser
             ? "User berhasil diperbarui!"
-            : "User baru berhasil ditambahkan!"
+            : "User baru berhasil ditambahkan!",
+          "success"
         );
         setIsModalOpen(false);
         fetchInitialData();
       } else {
         const err = await res.json();
-        alert(`Gagal menyimpan user: ${err.message || "Terjadi kesalahan"}`);
+        notify(`Gagal menyimpan user: ${err.message || "Terjadi kesalahan"}`, "error");
       }
     } catch (error) {
       console.error(error);
-      alert("Gagal menghubungi server.");
+      notify("Gagal menghubungi server.", "error");
     } finally {
       setSaving(false);
     }
   };
 
   const handleDeleteUser = async (id: string, name: string) => {
-    if (!confirm(`Apakah Anda yakin ingin menghapus user "${name}"?`)) return;
+    if (!(await confirmAction(`Apakah Anda yakin ingin menghapus user "${name}"?`))) return;
 
     try {
       const res = await fetch(`/api/users/${id}`, { method: "DELETE" });
       if (res.ok) {
         setUsers(users.filter((u) => u.id !== id));
-        alert("User berhasil dihapus.");
+        notify("User berhasil dihapus.", "success");
       } else {
-        alert("Gagal menghapus user.");
+        notify("Gagal menghapus user.", "error");
       }
     } catch (err) {
       console.error(err);
-      alert("Terjadi kesalahan.");
+      notify("Terjadi kesalahan.", "error");
     }
   };
 
@@ -298,6 +301,9 @@ export default function UserManagementPage() {
 
       {/* Main Table Card */}
       <div className="bg-white border border-slate-100 rounded-3xl shadow-soft overflow-hidden">
+        <p className="px-4 pt-3 text-[11px] font-medium text-slate-500 sm:hidden">
+          Geser tabel ke samping untuk melihat kolom lainnya.
+        </p>
         <DragScrollContainer>
           <table className="w-full text-left border-collapse min-w-[700px]">
             <thead>
@@ -415,8 +421,8 @@ export default function UserManagementPage() {
 
       {/* MODAL FORM ADD / EDIT USER */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
-          <div className="bg-white border border-slate-100 rounded-3xl shadow-soft-lg w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-900/40 p-3 backdrop-blur-sm sm:items-center sm:p-4">
+          <div className="my-auto flex max-h-[calc(100dvh-1.5rem)] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-soft-lg animate-in fade-in zoom-in-95 duration-150 sm:rounded-3xl">
             {/* Modal Header */}
             <div className="bg-white p-6 flex justify-between items-center border-b border-slate-100">
               <h3 className="text-base font-extrabold text-slate-800">
@@ -431,7 +437,7 @@ export default function UserManagementPage() {
             </div>
 
             {/* Modal Body / Form */}
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4 overflow-y-auto p-4 sm:p-6">
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1.5">
                   NAMA LENGKAP *
@@ -512,7 +518,7 @@ export default function UserManagementPage() {
                 <label className="block text-xs font-bold text-slate-700 mb-2">
                   APPROVAL ROLES (BISA PILIH LEBIH DARI 1) *
                 </label>
-                <div className="grid grid-cols-2 gap-2 p-3 bg-slate-50 border border-slate-100 rounded-2xl">
+                <div className="grid grid-cols-1 gap-2 p-3 bg-slate-50 border border-slate-100 rounded-2xl sm:grid-cols-2">
                   {availableRoles.map((role) => {
                     const isChecked = formData.roles.includes(role.code);
                     return (
@@ -538,7 +544,7 @@ export default function UserManagementPage() {
               </div>
 
               {/* Modal Actions */}
-              <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+              <div className="flex flex-col-reverse gap-2 pt-4 border-t border-slate-100 sm:flex-row sm:justify-end sm:gap-3">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}

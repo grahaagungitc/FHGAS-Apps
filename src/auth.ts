@@ -1,7 +1,6 @@
 import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import { db } from "@/lib/db";
-import { requestUnregisteredAccess } from "@/lib/access-requests";
 
 const googleClientId = process.env.GOOGLE_CLIENT_ID || process.env.AUTH_GOOGLE_ID || "";
 const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET || process.env.AUTH_GOOGLE_SECRET || "";
@@ -43,19 +42,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           return true;
         }
 
-        // 2. Jika user BELUM terdaftar di User DB, ajukan/cek status permohonan akses
-        console.log(`[AUTH_SIGNIN] Unregistered user attempted login: ${email}. Creating AccessRequest...`);
-        try {
-          await requestUnregisteredAccess({
-            email: email,
-            name: user.name || user.email,
-          });
-        } catch (reqError) {
-          console.error("[AUTH_SIGNIN] Failed to record AccessRequest:", reqError);
-        }
-
-        // Tampilkan pesan status pendaftaran dikirim ke admin
-        return "/login?error=AccessPending";
+        // New Google accounts continue to the onboarding form before requesting access.
+        return true;
       } catch (error) {
         console.error("[AUTH_SIGNIN] Database error during sign-in:", error);
         // Kembali ke login dengan query error NotRegistered
@@ -64,6 +52,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     },
     async jwt({ token, user }) {
       if (user?.email) {
+        token.registered = false;
         try {
           const email = user.email.trim();
           const dbUser = await db.user.findFirst({
@@ -81,6 +70,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             token.id = dbUser.id;
             token.systemRole = roleCodes.includes("ADMIN") ? "ADMIN" : "STAFF";
             token.isIT = dbUser.isIT;
+            token.registered = true;
+          } else {
+            token.registered = false;
+            token.onboardingName = user.name || "";
           }
         } catch (dbError) {
           console.error("Database error during JWT callback:", dbError);
@@ -99,6 +92,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           id: token.id ?? token.sub,
           systemRole: token.systemRole ?? "STAFF",
           isIT: token.isIT ?? false,
+          registered: token.registered ?? true,
         });
       }
       return session;

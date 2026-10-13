@@ -4,6 +4,7 @@ import { sendNewAccessRequestEmail } from "@/lib/email";
 export async function requestUnregisteredAccess(input: {
   email: string;
   name: string;
+  requestedDepartmentId?: string;
 }) {
   const email = input.email.trim().toLowerCase();
   const existingRequest = await db.accessRequest.findUnique({ where: { email } });
@@ -11,11 +12,16 @@ export async function requestUnregisteredAccess(input: {
     where: { email },
     update: {
       name: input.name,
+      requestedDepartmentId: input.requestedDepartmentId || null,
       status: "PENDING",
       resolvedById: null,
       resolvedAt: null,
     },
-    create: { email, name: input.name },
+    create: {
+      email,
+      name: input.name,
+      requestedDepartmentId: input.requestedDepartmentId || null,
+    },
   });
 
   if (existingRequest?.status === "PENDING") return accessRequest;

@@ -23,9 +23,25 @@ export async function middleware(req: NextRequest) {
   });
 
   const isApiRoute = pathname.startsWith("/api");
+  const isPublicThemeRead = req.method === "GET" && pathname === "/api/setup/theme";
+
+  const isAllowedUnregisteredApi =
+    pathname === "/api/signup/complete" ||
+    (pathname === "/api/departments" && req.method === "GET") ||
+    (pathname === "/api/setup/theme" && req.method === "GET");
+  if (token?.registered === false && !isAllowedUnregisteredApi) {
+    if (isApiRoute) {
+      return NextResponse.json(
+        { code: "REGISTRATION_REQUIRED", message: "Lengkapi pendaftaran sebelum mengakses fitur aplikasi." },
+        { status: 403 }
+      );
+    }
+    return NextResponse.redirect(new URL("/signup/complete", req.url));
+  }
 
   // 3. Jika pengguna tidak membawa Token / Session (Belum Login)
   if (!token) {
+    if (isPublicThemeRead) return NextResponse.next();
     if (isApiRoute) {
       // Jika request API, kembalikan JSON status 401 Unauthorized (JANGAN REROUTE/REDIRECT)
       return NextResponse.json(
@@ -48,11 +64,38 @@ export async function middleware(req: NextRequest) {
     (isSaaSetupPath && !isPublicSaaConfigRead) ||
     pathname === "/api/setup/access-requests";
 
+  const deniedModule = pathname.startsWith("/dashboard/setup")
+    ? "System Setup"
+    : isSaaSetupPath
+      ? "SAA Configuration"
+      : pathname === "/api/setup/access-requests"
+        ? "Access Requests"
+        : /^\/api\/users(\/|$)/.test(pathname)
+          ? "User Management"
+          : /^\/api\/departments(\/|$)/.test(pathname)
+            ? "Department Management"
+            : pathname === "/dashboard/it/saa"
+              ? "SAA Requests"
+              : "modul yang diminta";
+
+  const redirectWithAccessDenied = (moduleName: string) => {
+    const redirectUrl = new URL("/dashboard", req.url);
+    redirectUrl.searchParams.set("accessDenied", "1");
+    redirectUrl.searchParams.set("module", moduleName);
+    return NextResponse.redirect(redirectUrl);
+  };
+
   if (isAdminPath && token.systemRole !== "ADMIN") {
     if (isApiRoute) {
-      return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+      return NextResponse.json(
+        {
+          code: "ACCESS_DENIED",
+          message: `Anda tidak memiliki akses ke ${deniedModule}. Hubungi administrator jika akses ini diperlukan.`,
+        },
+        { status: 403 }
+      );
     }
-    return NextResponse.redirect(new URL("/dashboard", req.url));
+    return redirectWithAccessDenied(deniedModule);
   }
 
   if (pathname === "/dashboard/setup/saa-fields") {
@@ -64,7 +107,7 @@ export async function middleware(req: NextRequest) {
     token.systemRole !== "ADMIN" &&
     token.isIT !== true
   ) {
-    return NextResponse.redirect(new URL("/dashboard", req.url));
+    return redirectWithAccessDenied("SAA Requests");
   }
 
   // 4. Pengguna sudah login -> Bebaskan navigasi ke semua halaman /dashboard
